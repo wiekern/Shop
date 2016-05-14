@@ -1,0 +1,36 @@
+<assembly
+	xmlns="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/plugins/maven-assembly-plugin/assembly/1.1.2 http://maven.apache.org/xsd/assembly-1.1.2.xsd">
+	<id>abgabe</id>
+	<formats>
+		<format>zip</format>
+	</formats>
+	<includeBaseDirectory>false</includeBaseDirectory>
+
+	<files>
+		<file>
+			<source>target/pom.xml</source>
+			<outputDirectory>${project.groupId}/${project.artifactId}</outputDirectory>
+			<filtered>false</filtered>
+		</file>
+		
+		<file>
+			<source>src/main/assembly/src.xml</source>
+			<outputDirectory>${project.groupId}/${project.artifactId}/src/main/assembly</outputDirectory>
+			<filtered>false</filtered>
+		</file>
+	</files>
+
+	<fileSets>
+		<fileSet>
+			<directory>${basedir}</directory>
+			<outputDirectory>${project.groupId}/${project.artifactId}</outputDirectory>
+			<includes>
+				<include>src/main/java/**</include>
+				<include>src/main/resources/**</include>
+			</includes>
+		</fileSet>
+
+	</fileSets>
+</assembly>

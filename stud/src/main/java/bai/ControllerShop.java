@@ -1,0 +1,25 @@
+package bai;
+
+import bai.ModelShop;
+import bai.ViewShop;
+
+public class ControllerShop {
+	private ViewShop vShop;
+	private ModelShop mShop;
+	
+	public ControllerShop() {
+		super();
+	}
+	
+	public void link(ModelShop model, ViewShop view) {
+		this.vShop = view;
+		this.mShop = model;
+	
+		//this.mShop.registerObeserver(view);
+		vShop.getWarenShowList().setItems((mShop.getDelegate()));
+		vShop.setWarenListCellFactory();
+		vShop.clickWaren();
+		vShop.setBtnActionAddProduct();
+		vShop.setBtnActionDeleteProduct();
+	}
+}

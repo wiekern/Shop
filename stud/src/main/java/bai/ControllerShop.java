@@ -21,5 +21,7 @@ public class ControllerShop {
 		vShop.clickWaren();
 		vShop.setBtnActionAddProduct();
 		vShop.setBtnActionDeleteProduct();
+		vShop.setBtnActionLoadStrategy();
+		vShop.setBtnActionStoreStrategy();
 	}
 }

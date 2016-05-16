@@ -4,12 +4,10 @@ import java.util.ArrayList;
 import fpt.com.Product;
 
 public class ProductList extends ArrayList<Product> implements fpt.com.ProductList {
-
 	/**
 	 * 
 	 */
-	private static final long serialVersionUID = 1L;
-
+	private static final long serialVersionUID = 2831444849399808145L;
 
 	@Override
 	public boolean add(Product e) {

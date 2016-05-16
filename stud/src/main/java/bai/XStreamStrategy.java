@@ -1,5 +1,6 @@
 package bai;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -8,7 +9,6 @@ import java.io.ObjectOutputStream;
 
 import com.thoughtworks.xstream.XStream;
 import fpt.com.Product;
-import javafx.collections.ObservableList;
 
 public class XStreamStrategy implements fpt.com.SerializableStrategy {
 	
@@ -22,7 +22,6 @@ public class XStreamStrategy implements fpt.com.SerializableStrategy {
 		xs.aliasField("anzahl",bai.Product.class, "quantity");
 		xs.aliasField("preis",bai.Product.class, "price");
 		xs.alias("ware", bai.Product.class);
-		xs.alias("waren", ObservableList.class);
 		xs.registerConverter(new IDValueConverter());
 		xs.registerConverter(new PriceValueConverter());
 		xs.registerConverter(new NameValueConverter());
@@ -32,7 +31,7 @@ public class XStreamStrategy implements fpt.com.SerializableStrategy {
 	public XStream getXs() {
 		return xs;
 	}
- 
+	
 	@Override
 	public Product readObject() throws IOException {
 		if (ois != null) {
@@ -40,9 +39,11 @@ public class XStreamStrategy implements fpt.com.SerializableStrategy {
 				return (Product) ois.readObject();
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
+			} catch (EOFException eofE) {
+				return null;
 			}
 		} 
-		
+	
 		return null;
 	}
 

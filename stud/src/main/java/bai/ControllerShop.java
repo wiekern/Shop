@@ -2,6 +2,7 @@ package bai;
 
 import bai.ModelShop;
 import bai.ViewShop;
+import javafx.collections.ListChangeListener;
 
 public class ControllerShop {
 	private ViewShop vShop;
@@ -16,6 +17,13 @@ public class ControllerShop {
 		this.mShop = model;
 	
 		//this.mShop.registerObeserver(view);
+		mShop.addListener(new ListChangeListener() {
+			@Override
+			public void onChanged(Change c) {
+				vShop.getWarenShowList().refresh();
+			}
+			
+		});
 		vShop.getWarenShowList().setItems((mShop.getDelegate()));
 		vShop.setWarenListCellFactory();
 		vShop.clickWaren();

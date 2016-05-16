@@ -2,6 +2,7 @@ package bai;
 
 import java.beans.XMLDecoder;
 import java.beans.XMLEncoder;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -16,8 +17,14 @@ public class XMLStrategy implements fpt.com.SerializableStrategy {
 	@Override
 	public Product readObject() throws IOException {
 		if (xmlDecoder != null) {
-			Product product = (Product)xmlDecoder.readObject();
-			return product;
+			try {
+				Product product = (Product)xmlDecoder.readObject();
+				return product;
+			} catch (ArrayIndexOutOfBoundsException outE) {
+				return null;
+			} catch (IllegalArgumentException iE) {
+				return null;
+			}
 		} else {
 			return null;
 		}

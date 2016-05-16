@@ -1,5 +1,6 @@
 package bai;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
@@ -21,11 +22,13 @@ public class BinaryStrategy implements fpt.com.SerializableStrategy {
 		if (ois != null) {
 			try {
 				product = (Product)ois.readObject();
+			} catch (EOFException eofE) {
+				return null;
 			} catch (IOException IoE) {
 				IoE.printStackTrace();	
 			} catch (ClassNotFoundException notFoundE) {
 				notFoundE.printStackTrace();
-			}
+			} 
 			return product;
 		} else {
 			return null;

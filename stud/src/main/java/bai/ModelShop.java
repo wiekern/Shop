@@ -1,10 +1,5 @@
 package bai;
 
-//import java.util.ArrayList;
-//import java.util.List;
-//import java.util.Observer;
-
-import bai.ProductList;
 import fpt.com.Product;
 import javafx.collections.FXCollections;
 import javafx.collections.ModifiableObservableListBase;
@@ -35,13 +30,11 @@ public class ModelShop extends ModifiableObservableListBase<Product> {
 
 	@Override
 	public Product get(int index) {
-		// TODO Auto-generated method stub
 		return delegate.get(index);
 	}
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
 		return delegate.size();
 	}
 
@@ -60,19 +53,14 @@ public class ModelShop extends ModifiableObservableListBase<Product> {
 
 	@Override
 	protected Product doSet(int index, Product element) {
-		// TODO Auto-generated method stub
-		Product productSeted = delegate.set(index, element);
+		return delegate.set(index, element);
 		//informObeserver();
-		return productSeted;
 	}
 
 	@Override
 	protected Product doRemove(int index) {
-		// TODO Auto-generated method stub
-		Product productRemoved = delegate.remove(index);
+		return delegate.remove(index);
 		//informObeserver();
-		return productRemoved;
-		
 	}
 
 }

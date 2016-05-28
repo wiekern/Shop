@@ -16,9 +16,14 @@ public class JDBCConnector {
 	private static final String PASSWORD = "ftpw10";
 	private String[] types = new String[] {"TABLE"};
 	private Connection dbConnection = null;
+	private boolean isConnected = false;
 	
 	public JDBCConnector() {
 		
+	}
+	
+	public boolean isConnected() {
+		return isConnected;
 	}
 	
 	public Connection getDbConnection() {
@@ -32,14 +37,17 @@ public class JDBCConnector {
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 			//System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			isConnected = false;
 			return false;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			//System.err.println(e.getClass().getName() + ": " + e.getMessage());	
+			isConnected = false;
 			return false;
 		}
 		
 		System.out.println("Opened database successfully.");
+		isConnected = true;
 		return true;
 	}
 	
@@ -55,6 +63,8 @@ public class JDBCConnector {
 	}
 	
 	public void showAlltables() {
+		if (!isConnected) return;
+		
 		DatabaseMetaData metaData = null;
 		try {
 			metaData = dbConnection.getMetaData();
@@ -68,6 +78,7 @@ public class JDBCConnector {
 	}
 	
 	public long insert(String name, double price, int quantity) {
+		if (!isConnected) return -1;
 		String insertQuery = "INSERT INTO products (name, price, quantity)"
 				+ "VALUES(?,?,?)";
 		try {
@@ -77,7 +88,7 @@ public class JDBCConnector {
 			insertProduct.setInt(3, quantity);
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.err.println("The Statement is incorrect.");
+			System.err.println("The INSERT Statement is incorrect.");
 			return -1;
 		}
 		
@@ -91,7 +102,9 @@ public class JDBCConnector {
 
 	}
 	
-	public void insert(Product product) {
+	public void insert(fpt.com.Product product) {
+		if (!isConnected) return;
+		
 		String insertQuery = "INSERT INTO products (name, price, quantity)"
 							+ "VALUES(?,?,?)";
 		try {
@@ -101,11 +114,13 @@ public class JDBCConnector {
 			insertProduct.setInt(3, product.getQuantity());
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.err.println("The Statement is incorrect.");
+			System.err.println("The INSERT Statement via Product is incorrect.");
 		}
 	}
 	
-	public fpt.shop.Product read(long productId) {
+	public Product read(long productId) {
+		if (!isConnected) return null;
+		
 		String readQuery = "SELECT id,name,price,quantity FROM products WHERE id=?";
 		PreparedStatement readProduct = null;
 		ResultSet rs = null;
@@ -115,11 +130,11 @@ public class JDBCConnector {
 		int pQuantity;
 		int pId;
 		try {
+			System.out.println(readQuery);
 			readProduct = dbConnection.prepareStatement(readQuery);
 			readProduct.setLong(1, productId);
 			rs = readProduct.executeQuery();
 			while(rs.next()) {
-				
 				pName = rs.getString("name");
 				pPrice = rs.getDouble("price");
 				pQuantity = rs.getInt("quantity");
@@ -129,7 +144,7 @@ public class JDBCConnector {
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
-			System.err.println("The Statement is incorrect.");
+			System.err.println("The SELECT Statement is incorrect.");
 			return null;
 		}
 		

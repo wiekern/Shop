@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import fpt.com.Product;
+import fpt.shop.JPAEntityManagerFactory.GetFacMethod;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
@@ -116,7 +117,7 @@ public class ViewShop {
 		
 		strategyHBox.getChildren().addAll(btnLoad, btnStore);
 		strategyComboBox.setPrefWidth(200);
-		strategyComboBox.setPromptText("slect Strategy");
+		strategyComboBox.setPromptText("Select Strategy");
 		
 		hBox.setPrefWidth(200);
 		mainPane.add(strategyComboBox, 0, 0);
@@ -127,7 +128,10 @@ public class ViewShop {
 		strategyComboBox.getItems().addAll(
 				"BinaryStrategy",
 				"XMLStrategy",
-				"XStreamStrategy");
+				"XStreamStrategy",
+				"JDBCStrategy",
+				"OpenJPAWithConfig",
+				"OpenJPAWithoutConfig");
 	}
 	
 	public void setBtnActionLoadStrategy() {
@@ -197,6 +201,66 @@ public class ViewShop {
 						}
 					}
 				}
+				break;
+			case "JDBCStrategy":
+				Product jdbcProduct = null;
+				JDBCConnector jdbcCon = new JDBCConnector();
+				if (!jdbcCon.isConnected()) {
+					if (!jdbcCon.connectDB()) {
+						System.out.println("Connected Database failed, cannot load product from database.");
+						return ;
+					}
+				} 
+				
+				try {
+					jdbcProduct = jdbcCon.read(IDGenerator.generateId());
+					if (jdbcProduct != null) {
+						modelShop.add(jdbcProduct);
+					}
+				} catch (IDOverflowException e) {
+					e.printStackTrace();
+					System.err.println("Product id is over flow, please re-run this programm.");
+				} 
+				
+				jdbcCon.closeConnection();
+				break;
+			case "OpenJPAWithConfig":
+				Product withProduct = null;
+				JPAEntityManagerFactory withFac = new JPAEntityManagerFactory();
+				if (!withFac.setup(GetFacMethod.WithConfig)) {
+					System.out.println("OpenJPA setup with config failed.");
+					return ;
+				} else {
+					try {
+						withProduct = withFac.readProduct(IDGenerator.generateId());
+						if (withProduct != null) {
+							modelShop.add(withProduct);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+						System.err.println("Product id is over flow, please re-run this programm.");
+					}
+				}
+				withFac.closeFactory();
+				break;
+			case "OpenJPAWithoutConfig":
+				Product jpaProduct = null;
+				JPAEntityManagerFactory Fac = new JPAEntityManagerFactory();
+				if (!Fac.setup(GetFacMethod.WithoutConfig)) {
+					System.out.println("OpenJPA setup without config failed.");
+					return ;
+				} else {
+					try {
+						jpaProduct = Fac.readProduct(IDGenerator.generateId());
+						if (jpaProduct != null) {
+							modelShop.add(jpaProduct);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+						System.err.println("Product id is over flow, please re-run this programm.");
+					}
+				}
+				Fac.closeFactory();
 				break;
 			default:
 				break;
@@ -271,6 +335,47 @@ public class ViewShop {
 						}
 					}
 				}		
+				break;
+			case "JDBCStrategy":
+				JDBCConnector jdbcCon = new JDBCConnector();
+				if (!jdbcCon.isConnected()) {
+					if (!jdbcCon.connectDB()) {
+						System.out.println("Connected Database failed, cannot load product from database.");
+						return ;
+					}
+				} 
+				
+				for(Product p: currentProducts) {
+					jdbcCon.insert(p);
+				}
+
+				jdbcCon.closeConnection();
+				break;
+			case "OpenJPAWithConfig":
+				JPAEntityManagerFactory withFac = new JPAEntityManagerFactory();
+				if (!withFac.setup(GetFacMethod.WithConfig)) {
+					System.out.println("OpenJPA setup with config failed.");
+					return ;
+				} else {
+					for(Product p: currentProducts) {
+						withFac.updateProduct(p);
+					}
+				}
+				
+				withFac.closeFactory();
+				break;
+			case "OpenJPAWithoutConfig":
+				JPAEntityManagerFactory Fac = new JPAEntityManagerFactory();
+				if (!Fac.setup(GetFacMethod.WithoutConfig)) {
+					System.out.println("OpenJPA setup without config failed.");
+					return ;
+				} else {
+					for(Product p: currentProducts) {
+						Fac.updateProduct(p);
+					}
+				}
+				
+				Fac.closeFactory();
 				break;
 			default:
 				break;

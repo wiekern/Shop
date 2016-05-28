@@ -9,13 +9,23 @@ import javax.persistence.Query;
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.EntityTransaction;
+import javax.persistence.Persistence;
+import javax.persistence.PersistenceContext;
 
 import org.apache.openjpa.persistence.OpenJPAPersistence;
+import org.postgresql.fastpath.Fastpath;
 
 public class JPAEntityManagerFactory {
 	
-	public static EntityManagerFactory getWithoutConfig() {
-
+	@PersistenceContext(unitName="openjpa")
+	private EntityManagerFactory entityManagerFactory;
+	
+	public enum GetFacMethod {
+		WithoutConfig,
+		WithConfig
+	}
+	
+	public EntityManagerFactory getWithoutConfig() {
 		Map<String, String> map = new HashMap<String, String>();
 
 		map.put("openjpa.ConnectionURL",
@@ -37,43 +47,86 @@ public class JPAEntityManagerFactory {
 					buf.append(";");
 				buf.append(c.getName());
 			}
-			// <class>Producer</class>
+			// <class>ftp.shop.Product</class>
 			map.put("openjpa.MetaDataFactory", "jpa(Types=" + buf.toString()
 					+ ")");
 		}
 
 		return OpenJPAPersistence.getEntityManagerFactory(map);
-
 	}
 	
 	
-	public static void JPAPersistenceProduct(Product p) {
-		EntityManagerFactory fac = getWithoutConfig();
-		//EntityManagerFactory fac = Persistence.createEntityManagerFactory(
-		//		"openjpa", System.getProperties());
+	protected EntityManagerFactory getWithConfig() {
+		  return Persistence.createEntityManagerFactory("openjpa");
+	}
+	
+	public void updateProduct(fpt.com.Product p) {
+		EntityManager em = entityManagerFactory.createEntityManager();
+		EntityTransaction t = em.getTransaction();
+		
+		Product pt = null;
+		if ((pt = em.find(Product.class, p.getId())) != null) {
+			System.out.println("Entity alread exists.");
+			
+			t.begin();
+//			pt.setName(p.getName());
+//			pt.setPrice(p.getPrice());
+//			pt.setQuantity(p.getQuantity());
+//			pt.setId(p.getId());
+			em.merge(p);
+			t.commit(); 
+		} else {
+			System.out.println("Entity not existed, use persist() to create new one.");
 
-		EntityManager e = fac.createEntityManager();
-
-		EntityTransaction t = e.getTransaction();
-		 t.begin();
-		 e.persist(p);
-		 t.commit(); // all ok commit
-		// all Data is saved in database now
+			t.begin();
+			em.persist(p);
+			t.commit(); 
+		}
+	}
+	
+	public Product readProduct(long productId) {
+		EntityManager em = entityManagerFactory.createEntityManager();
+		EntityTransaction t = em.getTransaction();
+		Product product = null;
+		
 		t.begin();
-		// QBE
-		Query query = e.createQuery("SELECT c FROM Product c WHERE c.id=" + p.getId());
+		Query query = em.createQuery("SELECT c FROM Product c WHERE c.id=" + productId);
 		List resultList = query.getResultList();
 		System.out.println("2222");
 		for (Object o : resultList) {
 			System.out.println(o);
-			Product c = (Product) o;
-			System.out.println("3333" + c.getName());
+			product = (Product) o;
+			System.out.println("3333: " + product.getName());
 		}
-		t.commit(); // all ok commit
+		t.commit();
+	
+		em.close();
+		if (product != null) {
+			return product;
+		} else {
+			return null;
+		}
+	}
+	
+	public boolean setup(GetFacMethod method) {
 		
-		e.close();
-		fac.close();
-		System.out.println("44444");
+		if (method == GetFacMethod.WithoutConfig) {
+			entityManagerFactory = getWithoutConfig();
+		} else {
+			entityManagerFactory = getWithConfig();
+		}
+		
+		if (entityManagerFactory == null) {
+			return false;
+		} else {
+			return true;
+		}
+	}
+	
+	public void closeFactory() {
+		if (entityManagerFactory != null) {
+			entityManagerFactory.close();
+		}
 	}
 
 }

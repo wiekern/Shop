@@ -30,7 +30,7 @@ public class Product implements fpt.com.Product, java.io.Externalizable {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY, generator = "product_SEQ")
-	//@SequenceGenerator(name = "product_SEQ", sequenceName ="products_id_seq", allocationSize = 1)
+	@SequenceGenerator(name = "product_SEQ", sequenceName ="products_id_seq", allocationSize = 1)
 	private long id;
 	
 	@Persistent
@@ -47,7 +47,7 @@ public class Product implements fpt.com.Product, java.io.Externalizable {
 
 
 	protected Product() {
-		//this("", 0, 0, 0);
+		
 	}
 	
 	protected Product(String name, double price, int quantity) {

@@ -76,6 +76,9 @@ public class ViewShop {
 		mainPane.setHgap(5);
 		
 		warenShowList = new ListView<>();
+		warenShowList.setPrefWidth(300);
+		warenShowList.setPrefHeight(400);
+		
 		productNameField  = new TextField();
 		productPriceField = new TextField();
 		productCountField = new TextField();
@@ -86,21 +89,21 @@ public class ViewShop {
 		btnDelProduct.setPrefWidth(70);
 		
 		hBox = new HBox(8);
+		hBox.setPrefWidth(200);
 		hBox.setPadding(new Insets(10, 0, 0, 0));
 		vBox = new VBox();
-		vBox.setPrefWidth(200);
+		vBox.setPrefWidth(300);
+		
 		strategyComboBox = new ComboBox<>();
 		btnLoad = new Button("Load");
 		btnStore = new Button("Store");
 		btnLoad.setPrefWidth(70);
 		btnStore.setPrefWidth(70);
 		strategyHBox = new HBox(8);
+		strategyComboBox.setPrefWidth(300);
 	}
 	
 	public void makeUp() {
-		warenShowList.setPrefWidth(200);
-		warenShowList.setPrefHeight(400);
-	
 		Label nameLabel = new Label("Name:");
 		Label priceLabel = new Label("Price:");
 		Label countLabel = new Label("Count:");
@@ -116,10 +119,8 @@ public class ViewShop {
 		hBox.getChildren().add(btnDelProduct);
 		
 		strategyHBox.getChildren().addAll(btnLoad, btnStore);
-		strategyComboBox.setPrefWidth(200);
 		strategyComboBox.setPromptText("Select Strategy");
 		
-		hBox.setPrefWidth(200);
 		mainPane.add(strategyComboBox, 0, 0);
 		mainPane.add(strategyHBox, 1, 0);
 		mainPane.add(warenShowList, 0, 1);
@@ -401,6 +402,7 @@ public class ViewShop {
 			if (productNameField.getText().trim().isEmpty()
 				|| productPriceField.getText().trim().isEmpty()
 				|| productCountField.getText().trim().isEmpty()) {
+				System.out.println("Please filling out all fields.");
 				return ;
 			} else {
 				String productName = productNameField.getText();
@@ -453,7 +455,7 @@ public class ViewShop {
 					protected void updateItem(Product item, boolean empty) {
 						super.updateItem(item, empty);
 						if (item != null) {
-							setText(item.getName() + " " + item.getId());
+							setText("Name: " + item.getName() + " | ID: " + item.getId());
 						} else {
 							setText("");
 						}

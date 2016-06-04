@@ -1,5 +1,8 @@
 package fpt.shop;
 
+import fpt.com.db.AbstractDatabaseStrategy;
+
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -8,7 +11,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class JDBCConnector {
+public class JDBCConnector extends AbstractDatabaseStrategy {
 	
 	private static final String DBURL = "jdbc:postgresql://java.is.uni-due.de/ws1011";
 	private static final String DBDRIVER = "org.postgresql.Driver";
@@ -36,12 +39,12 @@ public class JDBCConnector {
 			dbConnection = DriverManager.getConnection(DBURL, USERNAME, PASSWORD);
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
-			//System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			System.out.println("Class of Database driver not found.");
 			isConnected = false;
 			return false;
 		} catch (SQLException e) {
 			e.printStackTrace();
-			//System.err.println(e.getClass().getName() + ": " + e.getMessage());	
+			System.out.println("Connected database failed with the incorrect SQL statement.");	
 			isConnected = false;
 			return false;
 		}
@@ -79,43 +82,39 @@ public class JDBCConnector {
 	
 	public long insert(String name, double price, int quantity) {
 		if (!isConnected) return -1;
+		ResultSet idRS = null;
 		String insertQuery = "INSERT INTO products (name, price, quantity)"
 				+ "VALUES(?,?,?)";
+		String updateQuery = "UPDATE products SET name=" + name + ",price=" + price + ",quantity=" + quantity + "WHERE id=?";
+		long id = -1;
+		//String productIdQuery = "SLECT id FROM products WHERE name=" + name + ",price=" + price + "quantity=" + quantity;
 		try {
 			PreparedStatement insertProduct = dbConnection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
 			insertProduct.setString(1, name);
 			insertProduct.setDouble(2, price);
 			insertProduct.setInt(3, quantity);
+			System.out.println("Hallo.");
+			if (!insertProduct.execute()) {
+				System.out.println("insert product via JDBC failed, try to update it.");
+				idRS = insertProduct.getGeneratedKeys();
+				while(idRS.next()) {
+					id = idRS.getLong(1);
+					System.out.println("Generated id=" + id + ", to update this record.");
+					PreparedStatement updateProduct = dbConnection.prepareStatement(updateQuery);
+					updateProduct.setLong(1, id);
+					
+				}
+			};
 		} catch (SQLException e) {
 			e.printStackTrace();
 			System.err.println("The INSERT Statement is incorrect.");
-			return -1;
 		}
 		
-		try {
-			return IDGenerator.generateId();
-		} catch (IDOverflowException e) {
-			e.printStackTrace();
-			System.err.println("ID overflow, cannot insert more products.");
-			return -1;
-		}
-
+		return id;
 	}
 	
 	public void insert(fpt.com.Product product) {
-		if (!isConnected) return;
-		
-		String insertQuery = "INSERT INTO products (name, price, quantity)"
-							+ "VALUES(?,?,?)";
-		try {
-			PreparedStatement insertProduct = dbConnection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS);
-			insertProduct.setString(1, product.getName());
-			insertProduct.setDouble(2, product.getPrice());
-			insertProduct.setInt(3, product.getQuantity());
-		} catch (SQLException e) {
-			e.printStackTrace();
-			System.err.println("The INSERT Statement via Product is incorrect.");
-		}
+		insert(product.getName(), product.getPrice(), product.getQuantity());
 	}
 	
 	public Product read(long productId) {
@@ -149,6 +148,28 @@ public class JDBCConnector {
 		}
 		
 		return product;
+	}
+
+	@Override
+	public fpt.com.Product readObject() throws IOException {
+		return null;
+	}
+
+	@Override
+	public void writeObject(fpt.com.Product obj) throws IOException {
+		
+	}
+
+	@Override
+	public void close() throws IOException {
+		
+	}
+
+	@Override
+	public void open() throws IOException {
+		if (!isConnected) {
+			connectDB();
+		}
 	}
 	
 

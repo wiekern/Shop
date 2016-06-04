@@ -1,6 +1,7 @@
 package fpt.shop;
 
 import java.util.Map;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,9 +14,10 @@ import javax.persistence.Persistence;
 import javax.persistence.PersistenceContext;
 
 import org.apache.openjpa.persistence.OpenJPAPersistence;
-import org.postgresql.fastpath.Fastpath;
 
-public class JPAEntityManagerFactory {
+import fpt.com.db.AbstractDatabaseStrategy;
+
+public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
 	
 	@PersistenceContext(unitName="openjpa")
 	private EntityManagerFactory entityManagerFactory;
@@ -92,11 +94,11 @@ public class JPAEntityManagerFactory {
 		t.begin();
 		Query query = em.createQuery("SELECT c FROM Product c WHERE c.id=" + productId);
 		List resultList = query.getResultList();
-		System.out.println("2222");
+		//System.out.println("2222");
 		for (Object o : resultList) {
 			System.out.println(o);
 			product = (Product) o;
-			System.out.println("3333: " + product.getName());
+			//System.out.println("3333: " + product.getName());
 		}
 		t.commit();
 	
@@ -127,6 +129,29 @@ public class JPAEntityManagerFactory {
 		if (entityManagerFactory != null) {
 			entityManagerFactory.close();
 		}
+	}
+
+
+	@Override
+	public fpt.com.Product readObject() throws IOException {
+		return null;
+	}
+
+
+	@Override
+	public void writeObject(fpt.com.Product obj) throws IOException {
+		
+	}
+
+
+	@Override
+	public void close() throws IOException {
+		closeFactory();
+	}
+
+
+	@Override
+	public void open() throws IOException {
 	}
 
 }

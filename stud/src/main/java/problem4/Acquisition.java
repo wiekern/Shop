@@ -55,32 +55,31 @@ public class Acquisition implements Runnable {
 		Cashpoint currCashpoint = currentAvailableCashpoint();
 		Customer customer;
 		while(true) {
-			long sleepTime = Math.round(Math.random()*2) * 1000;
+			long sleepTime = Math.round(Math.random()*2) * 1000; //[0,2]
 			try {
 				if (currCashpoint.isFull()) {
-					System.out.println("Cashpoint " + currCashpoint.getId() + " is full. exit and no more customers.");
+					System.out.println("Kasse " + (currCashpoint.getId() + 1) + " is full. exit and no more customers.");
 					return ;
 				} else if (currCashpoint.isLimited()) {
-					System.out.println("+++++++++ New cashpoint +++++++++");
-					System.out.println("[Cashpoint " + currCashpoint.getId() + "] has 6 customers, to open a new cashpoint.");
-					System.out.println("+++++++++      End      +++++++++");
+					System.out.println("+++++++++ New Kasse +++++++++");
+					System.out.println("[Kasse " + (currCashpoint.getId() + 1) + "] has 6 customers, opening a new Kasse.");
+					System.out.println("+++++++++ End Kasse +++++++++");
 					currCashpoint = currentAvailableCashpoint();
 				}
 				
-				customer = new Customer("Customer" + customerCount);
-				//System.out.println("[" + customer.getName() + "] in the waitqueue of cashpoint " + currCashpoint.getId());
+				customer = new Customer("Customer" + customerCount, Math.round(Math.random()*90));
 				currCashpoint.enqueue(customer);
 				customerCount++;
 				if (!cashpointThreadArray[currCashpoint.getId()].isAlive()) {
-					System.out.println("[Cashpoint " + currCashpoint.getId() + "] begin to run.");
+					System.out.println("[Kasse " + (currCashpoint.getId() + 1) + "] opened.");
 					cashpointThreadArray[currCashpoint.getId()].start();
 				}		
-			
+				// Wartezeit
 				Thread.sleep(sleepTime);
 			} catch (InterruptedException e) {
 				System.out.println("A interrupt came.");
 			}
-			System.out.println("**Acquisition** spent " + sleepTime/1000 + " seconds.");
+			System.out.println("Acquisition spent " + sleepTime/1000 + " seconds.");
 		}
 	}
 }

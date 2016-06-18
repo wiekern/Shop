@@ -7,22 +7,10 @@ import javafx.collections.ObservableList;
 
 public class ModelShop extends ModifiableObservableListBase<Product> {
 	private final ObservableList<Product> delegate;
-	//private ArrayList<Observer> observers;
 	
 	public ModelShop() {
-		//observers = new ArrayList<>();
 		delegate = FXCollections.observableArrayList(new ProductList());
 	}
-	
-//	public void registerObeserver(Observer observer) {
-//		this.observers.add(observer);
-//	}
-//	
-//	public void informObeserver() {
-//		for(Observer ob: this.observers) {
-//			ob.update(null, ob);
-//		}
-//	}
 	
 	public ObservableList<Product> getDelegate() {
 		return this.delegate;
@@ -40,26 +28,25 @@ public class ModelShop extends ModifiableObservableListBase<Product> {
 
 	@Override
 	protected void doAdd(int index, Product element) {
-		for(Product e: delegate) {
-			if (e.getId() == element.getId()) {
-				System.out.println(e.getId());
-				return ;
-			}
-		}
+		// Avoid to add product with same ID, but to use OpenJPA, the default ID will be null.
+		// We allow products with same ID, after persistence via OpenJPA we get a new ID.
+//		for(Product e: delegate) {
+//			if (e.getId() == element.getId()) {
+//				System.out.println("Didn't add a product with same ID: " + e.getId());
+//				return ;
+//			}
+//		}
 		delegate.add(index, element);
-		//informObeserver();
 	}
 
 	@Override
 	protected Product doSet(int index, Product element) {
 		return delegate.set(index, element);
-		//informObeserver();
 	}
 
 	@Override
 	protected Product doRemove(int index) {
 		return delegate.remove(index);
-		//informObeserver();
 	}
 
 }

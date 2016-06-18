@@ -8,7 +8,6 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 import org.apache.openjpa.persistence.Persistent;
@@ -30,14 +29,15 @@ public class Product implements fpt.com.Product, java.io.Externalizable {
 	
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY, generator = "product_SEQ")
-	@SequenceGenerator(name = "product_SEQ", sequenceName ="products_id_seq", allocationSize = 1)
+	//@SequenceGenerator(name = "product_SEQ", sequenceName ="products_id_seq", allocationSize = 1)
 	private long id;
 	
-	@Persistent
+	@Persistent 
+	//default attribute. Don't need to indicate explicit. @Transient: not persistent
 	@Strategy("fpt.com.db.StringPropertyValueHandler")
 	private SimpleStringProperty name = new SimpleStringProperty();
 	
-	@Persistent
+	@Persistent 
 	@Strategy("fpt.com.db.DoublePropertyValueHandler")
 	private SimpleDoubleProperty price = new SimpleDoubleProperty();
 	
@@ -46,17 +46,18 @@ public class Product implements fpt.com.Product, java.io.Externalizable {
 	private SimpleIntegerProperty quantity = new SimpleIntegerProperty();
 
 
-	protected Product() {
+	// Default constructor for OpenJPA.
+	public Product() {
 		
 	}
 	
-	protected Product(String name, double price, int quantity) {
+	public Product(String name, double price, int quantity) {
 		this.name.set(name);
 		this.price.set(price);;
 		this.quantity.set(quantity);
 	}
 	
-	protected Product(String name, long id, double price, int quantity) {
+	public Product(String name, long id, double price, int quantity) {
 		this.name.set(name);
 		this.price.set(price);;
 		this.quantity.set(quantity);
@@ -74,33 +75,32 @@ public class Product implements fpt.com.Product, java.io.Externalizable {
 	}
 
 	@Override
-	public double getPrice() {
+	public final double getPrice() {
 		return this.price.get();
 	}
 
 	@Override
-	public void setPrice(double price) {
+	public final void setPrice(double price) {
 		this.price.set(price);
 	}
 
 	@Override
-	public int getQuantity() {
+	public final int getQuantity() {
 		return this.quantity.get();
 	}
 
 	@Override
-	public void setQuantity(int quantity) {
+	public final void setQuantity(int quantity) {
 		this.quantity.set(quantity);
-		
 	}
 
 	@Override
-	public String getName() {
+	public final String getName() {
 		return this.name.get();
 	}
 
 	@Override
-	public void setName(String name) {
+	public final void setName(String name) {
 		this.name.set(name);
 	}
 

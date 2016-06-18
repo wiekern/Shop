@@ -21,7 +21,7 @@ public class XStreamStrategy implements fpt.com.SerializableStrategy {
 		xs.useAttributeFor(fpt.shop.Product.class, "id");
 		xs.aliasField("anzahl",fpt.shop.Product.class, "quantity");
 		xs.aliasField("preis",fpt.shop.Product.class, "price");
-//		xs.alias("ware", bai.Product.class);
+		//xs.alias("ware", fpt.shop.Product.class);
 		xs.registerConverter(new IDValueConverter());
 		xs.registerConverter(new PriceValueConverter());
 		xs.registerConverter(new NameValueConverter());

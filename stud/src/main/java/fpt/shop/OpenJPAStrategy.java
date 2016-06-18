@@ -17,7 +17,7 @@ import org.apache.openjpa.persistence.OpenJPAPersistence;
 
 import fpt.com.db.AbstractDatabaseStrategy;
 
-public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
+public class OpenJPAStrategy extends AbstractDatabaseStrategy {
 	
 	@PersistenceContext(unitName="openjpa")
 	private EntityManagerFactory entityManagerFactory;
@@ -25,6 +25,16 @@ public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
 	public enum GetFacMethod {
 		WithoutConfig,
 		WithConfig
+	}
+	private GetFacMethod confMethod;
+	
+	public OpenJPAStrategy() {
+		this.confMethod = GetFacMethod.WithoutConfig;
+	}
+	
+	public OpenJPAStrategy(GetFacMethod method) {
+		this.confMethod = method;
+		
 	}
 	
 	public EntityManagerFactory getWithoutConfig() {
@@ -62,19 +72,19 @@ public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
 		  return Persistence.createEntityManagerFactory("openjpa");
 	}
 	
+	/**
+	 * Update(merge) or insert(persist) product.
+	 * @param p
+	 */
 	public void updateProduct(fpt.com.Product p) {
 		EntityManager em = entityManagerFactory.createEntityManager();
 		EntityTransaction t = em.getTransaction();
 		
 		Product pt = null;
 		if ((pt = em.find(Product.class, p.getId())) != null) {
-			System.out.println("Entity alread exists.");
+			System.out.println("Entity already exists, to update it.");
 			
 			t.begin();
-//			pt.setName(p.getName());
-//			pt.setPrice(p.getPrice());
-//			pt.setQuantity(p.getQuantity());
-//			pt.setId(p.getId());
 			em.merge(p);
 			t.commit(); 
 		} else {
@@ -82,6 +92,7 @@ public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
 
 			t.begin();
 			em.persist(p);
+			//System.out.println(p.getId());
 			t.commit(); 
 		}
 	}
@@ -94,11 +105,9 @@ public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
 		t.begin();
 		Query query = em.createQuery("SELECT c FROM Product c WHERE c.id=" + productId);
 		List resultList = query.getResultList();
-		//System.out.println("2222");
 		for (Object o : resultList) {
 			System.out.println(o);
 			product = (Product) o;
-			//System.out.println("3333: " + product.getName());
 		}
 		t.commit();
 	
@@ -134,13 +143,23 @@ public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
 
 	@Override
 	public fpt.com.Product readObject() throws IOException {
-		return null;
+		Product product = null; 
+		try {
+			long id = IDGenerator.generateId();
+			if (id > 10) {
+				return null;
+			}
+			product = readProduct(id);
+		} catch (IDOverflowException e) {
+			System.out.println("OpenJPA: ID overflow.");
+		}
+		return product;
 	}
 
 
 	@Override
 	public void writeObject(fpt.com.Product obj) throws IOException {
-		
+		updateProduct(obj);	
 	}
 
 
@@ -152,6 +171,7 @@ public class JPAEntityManagerFactory extends AbstractDatabaseStrategy {
 
 	@Override
 	public void open() throws IOException {
+		setup(confMethod);
 	}
 
 }

@@ -1,6 +1,5 @@
 package fpt.shop;
 
-import fpt.shop.JPAEntityManagerFactory.GetFacMethod;
 import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;

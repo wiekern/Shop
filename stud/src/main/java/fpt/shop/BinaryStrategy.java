@@ -7,11 +7,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
-import com.sun.javafx.iio.ios.IosDescriptor;
-
 import fpt.com.Product;
 
-public class BinaryStrategy implements fpt.com.SerializableStrategy {
+public class BinaryStrategy implements fpt.com.SerializableStrategy  {
 	
 	private Product product;
 	private ObjectInputStream ois;

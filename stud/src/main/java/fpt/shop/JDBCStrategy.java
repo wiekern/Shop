@@ -11,17 +11,18 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-public class JDBCConnector extends AbstractDatabaseStrategy {
+public class JDBCStrategy extends AbstractDatabaseStrategy {
 	
 	private static final String DBURL = "jdbc:postgresql://java.is.uni-due.de/ws1011";
 	private static final String DBDRIVER = "org.postgresql.Driver";
 	private static final String USERNAME = "ws1011";
 	private static final String PASSWORD = "ftpw10";
+	private static final String tableName = "products";
 	private String[] types = new String[] {"TABLE"};
 	private Connection dbConnection = null;
 	private boolean isConnected = false;
 	
-	public JDBCConnector() {
+	public JDBCStrategy() {
 		
 	}
 	
@@ -83,9 +84,9 @@ public class JDBCConnector extends AbstractDatabaseStrategy {
 	public long insert(String name, double price, int quantity) {
 		if (!isConnected) return -1;
 		ResultSet idRS = null;
-		String insertQuery = "INSERT INTO products (name, price, quantity)"
+		String insertQuery = "INSERT INTO " + tableName + " (name, price, quantity)"
 				+ "VALUES(?,?,?)";
-		String updateQuery = "UPDATE products SET name=" + name + ",price=" + price + ",quantity=" + quantity + "WHERE id=?";
+		String updateQuery = "UPDATE "+ tableName +" SET name=" + name + ",price=" + price + ",quantity=" + quantity + "WHERE id=?";
 		long id = -1;
 		//String productIdQuery = "SLECT id FROM products WHERE name=" + name + ",price=" + price + "quantity=" + quantity;
 		try {
@@ -93,7 +94,7 @@ public class JDBCConnector extends AbstractDatabaseStrategy {
 			insertProduct.setString(1, name);
 			insertProduct.setDouble(2, price);
 			insertProduct.setInt(3, quantity);
-			System.out.println("Hallo.");
+			//System.out.println("Hallo.");
 			if (!insertProduct.execute()) {
 				System.out.println("insert product via JDBC failed, try to update it.");
 				idRS = insertProduct.getGeneratedKeys();
@@ -102,7 +103,6 @@ public class JDBCConnector extends AbstractDatabaseStrategy {
 					System.out.println("Generated id=" + id + ", to update this record.");
 					PreparedStatement updateProduct = dbConnection.prepareStatement(updateQuery);
 					updateProduct.setLong(1, id);
-					
 				}
 			};
 		} catch (SQLException e) {
@@ -114,13 +114,16 @@ public class JDBCConnector extends AbstractDatabaseStrategy {
 	}
 	
 	public void insert(fpt.com.Product product) {
-		insert(product.getName(), product.getPrice(), product.getQuantity());
+		long id;
+		if ((id = insert(product.getName(), product.getPrice(), product.getQuantity())) != -1) {
+			product.setId(id);
+		}
 	}
 	
-	public Product read(long productId) {
+	public Product readProduct(long productId) {
 		if (!isConnected) return null;
 		
-		String readQuery = "SELECT id,name,price,quantity FROM products WHERE id=?";
+		String readQuery = "SELECT id,name,price,quantity FROM "+ tableName +" WHERE id=?";
 		PreparedStatement readProduct = null;
 		ResultSet rs = null;
 		Product product = null;
@@ -150,19 +153,30 @@ public class JDBCConnector extends AbstractDatabaseStrategy {
 		return product;
 	}
 
+	
 	@Override
 	public fpt.com.Product readObject() throws IOException {
-		return null;
+		Product product = null;
+		try {
+			long id = IDGenerator.generateId();
+			if (id > 10) {
+				return null;
+			}
+			product = readProduct(id);
+		} catch (IDOverflowException e) {
+			System.out.println("JDBCStrategy: ID overflow.");
+		}
+		return product;
 	}
 
 	@Override
 	public void writeObject(fpt.com.Product obj) throws IOException {
-		
+		insert(obj);
 	}
 
 	@Override
 	public void close() throws IOException {
-		
+		closeConnection();
 	}
 
 	@Override

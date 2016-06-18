@@ -4,18 +4,21 @@ import java.io.IOException;
 import java.nio.file.Paths;
 
 import fpt.com.Product;
-import fpt.shop.JPAEntityManagerFactory.GetFacMethod;
+import fpt.com.SerializableStrategy;
+
 import javafx.scene.control.Button;
-import javafx.scene.control.ComboBox;
+import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.util.Callback;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -31,12 +34,18 @@ public class ViewShop {
 	private HBox hBox;
 	private Button btnAddProduct;
 	private Button btnDelProduct;
-	private ComboBox<String> strategyComboBox; 
+	private ChoiceBox<String> strategyChoicebox; 
+	private ObservableList<String> comboList = FXCollections.observableArrayList(
+			"BinaryStrategy",
+			"XMLStrategy",
+			"XStreamStrategy",
+			"JDBCStrategy",
+			"OpenJPAWithConfig",
+			"OpenJPAWithoutConfig");
 	private Button btnLoad;
 	private Button btnStore;
 	private HBox strategyHBox;
 	private final String serDir = Paths.get(".").toAbsolutePath().normalize().toString() + "/";
-	//private final String serDir = "/Users/yafei/Desktop/SS_2016/Fortgeschnittene Programmiertechniken/E1/stud/";
 	
 	public ViewShop(ModelShop model) {
 		initialize();
@@ -80,7 +89,9 @@ public class ViewShop {
 		warenShowList.setPrefHeight(400);
 		
 		productNameField  = new TextField();
+		//productNameField.textProperty().bind(warenShowList.getSelectionModel().selectedItemProperty().);
 		productPriceField = new TextField();
+		//productPriceField.textProperty().bind(warenShowList.getSelectionModel().getSelectedItem().priceProperty());
 		productCountField = new TextField();
 		
 		btnAddProduct = new Button("Add");
@@ -94,13 +105,13 @@ public class ViewShop {
 		vBox = new VBox();
 		vBox.setPrefWidth(300);
 		
-		strategyComboBox = new ComboBox<>();
+		strategyChoicebox = new ChoiceBox<String>();
+		strategyChoicebox.setPrefWidth(300);
 		btnLoad = new Button("Load");
 		btnStore = new Button("Store");
 		btnLoad.setPrefWidth(70);
 		btnStore.setPrefWidth(70);
 		strategyHBox = new HBox(8);
-		strategyComboBox.setPrefWidth(300);
 	}
 	
 	public void makeUp() {
@@ -119,268 +130,140 @@ public class ViewShop {
 		hBox.getChildren().add(btnDelProduct);
 		
 		strategyHBox.getChildren().addAll(btnLoad, btnStore);
-		strategyComboBox.setPromptText("Select Strategy");
+		strategyChoicebox.setTooltip(new Tooltip("Select Strategy"));
+		strategyChoicebox.setItems(comboList);
 		
-		mainPane.add(strategyComboBox, 0, 0);
+		mainPane.add(strategyChoicebox, 0, 0);
 		mainPane.add(strategyHBox, 1, 0);
 		mainPane.add(warenShowList, 0, 1);
 		mainPane.add(vBox, 1, 1);	
-		
-		strategyComboBox.getItems().addAll(
-				"BinaryStrategy",
-				"XMLStrategy",
-				"XStreamStrategy",
-				"JDBCStrategy",
-				"OpenJPAWithConfig",
-				"OpenJPAWithoutConfig");
 	}
 	
+	private void getObjFromDatabase(SerializableStrategy strategy, String filename) {
+		Product tempProduct;
+		
+		try {
+			strategy.open(filename);
+			while((tempProduct = strategy.readObject()) != null) {
+				modelShop.add(tempProduct);
+			}
+		} catch (IOException e) {
+			System.out.println("Got object from database failed.");
+		} finally {
+			if (strategy != null) {
+				try {
+					strategy.close();
+				} catch (IOException e) {
+					System.out.println("closing strategy resource failed.");
+				}
+			}
+		}
+	}
+	
+	private void storeObjToDatabase(SerializableStrategy strategy, String fielname) {
+		try {
+			ObservableList<Product> currentProducts = modelShop.getDelegate();
+			strategy.open(fielname);
+			for(Product p: currentProducts) {
+				System.out.println(p.getName());
+				strategy.writeObject(p);
+			}
+		} catch (IOException e) {
+			System.out.println("Stored object to database failed.");
+			e.printStackTrace();
+		} finally {
+			if (strategy != null) {
+				try {
+					strategy.close();
+				} catch (IOException e) {
+					System.out.println("closing strategy resource failed.");
+				}
+			}
+		}
+	}
+		
 	public void setBtnActionLoadStrategy() {
 		btnLoad.setOnAction((v) -> {
+			SerializableStrategy strategy = null;
+			String filename = "";
+			
+			//Default strategy.
 			String s = "BinaryStrategy";
-			if(strategyComboBox.getValue() != null) {
-				s = strategyComboBox.getValue().toString();
+			if(strategyChoicebox.getValue() != null) {
+				s = strategyChoicebox.getValue().toString();
 			}
 			
 			switch (s) {
 			case "BinaryStrategy":
-				Product binaryProduct = null;
-				BinaryStrategy bStrategy = new BinaryStrategy();
-				try {
-					bStrategy.open(serDir + "products.ser");
-					while((binaryProduct = bStrategy.readObject()) != null) {
-						modelShop.add(binaryProduct);
-					}
-				} catch (IOException ioE) {
-					ioE.printStackTrace();
-				} finally {
-					if (bStrategy != null) {
-						try {
-							bStrategy.close();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}
+				strategy = new BinaryStrategy();
+				filename = serDir + "products.ser";
 				break;
 			case "XMLStrategy":
-				Product xmlProduct = null;
-				XMLStrategy xmlStrategy = new XMLStrategy();
-				try {
-					xmlStrategy.open(serDir + "products.xml");
-					while((xmlProduct = xmlStrategy.readObject()) != null) {
-						 modelShop.add(xmlProduct);
-					}
-				} catch (IOException ioE) {
-					ioE.printStackTrace();
-				} finally {
-					if (xmlStrategy != null) {
-						try {
-							xmlStrategy.close();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}
+				strategy = new XMLStrategy();
+				filename = serDir + "products.xml";
 				break;
 			case "XStreamStrategy":
-				Product xstreamProduct = null;
-				XStreamStrategy xstreamStrategy = new XStreamStrategy();
-				try {
-					xstreamStrategy.open(serDir + "products.xml");
-					while((xstreamProduct = xstreamStrategy.readObject()) != null) {
-						modelShop.add(xstreamProduct);
-					}
-				} catch (IOException ioE) {
-					ioE.printStackTrace();
-				} finally {
-					if (xstreamStrategy != null) {
-						try {
-							xstreamStrategy.close();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}
+				strategy = new XStreamStrategy();
+				filename = serDir + "products.xml";
 				break;
 			case "JDBCStrategy":
-				Product jdbcProduct = null;
-				JDBCConnector jdbcCon = new JDBCConnector();
-				if (!jdbcCon.isConnected()) {
-					if (!jdbcCon.connectDB()) {
-						System.out.println("Connected Database failed, cannot load product from database.");
-						return ;
-					}
-				} 
-				
-				try {
-					jdbcProduct = jdbcCon.read(IDGenerator.generateId());
-					if (jdbcProduct != null) {
-						modelShop.add(jdbcProduct);
-					}
-				} catch (IDOverflowException e) {
-					e.printStackTrace();
-					System.err.println("Product id is over flow, please re-run this programm.");
-				} 
-				
-				jdbcCon.closeConnection();
+				strategy = new JDBCStrategy();
 				break;
 			case "OpenJPAWithConfig":
-				Product withProduct = null;
-				JPAEntityManagerFactory withFac = new JPAEntityManagerFactory();
-				if (!withFac.setup(GetFacMethod.WithConfig)) {
-					System.out.println("OpenJPA setup with config failed.");
-					return ;
-				} else {
-					try {
-						withProduct = withFac.readProduct(IDGenerator.generateId());
-						if (withProduct != null) {
-							modelShop.add(withProduct);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-						System.err.println("Product id is over flow, please re-run this programm.");
-					}
-				}
-				withFac.closeFactory();
+				strategy = new OpenJPAStrategy(OpenJPAStrategy.GetFacMethod.WithoutConfig);
 				break;
 			case "OpenJPAWithoutConfig":
-				Product jpaProduct = null;
-				JPAEntityManagerFactory Fac = new JPAEntityManagerFactory();
-				if (!Fac.setup(GetFacMethod.WithoutConfig)) {
-					System.out.println("OpenJPA setup without config failed.");
-					return ;
-				} else {
-					try {
-						jpaProduct = Fac.readProduct(IDGenerator.generateId());
-						if (jpaProduct != null) {
-							modelShop.add(jpaProduct);
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
-						System.err.println("Product id is over flow, please re-run this programm.");
-					}
-				}
-				Fac.closeFactory();
-				break;
+				strategy = new OpenJPAStrategy(OpenJPAStrategy.GetFacMethod.WithConfig);
+				break;	
 			default:
 				break;
 			}
+			if (strategy != null)	getObjFromDatabase(strategy, filename);
+			
+			// refreshing the Listview.
+			warenShowList.refresh();
 		});
 	}
 	
 	public void setBtnActionStoreStrategy() {
 		btnStore.setOnAction((v) -> {
-			ObservableList<Product> currentProducts = warenShowList.getItems();
-			if (currentProducts == null) return ;
+			SerializableStrategy strategy = null;
+			String filename = "";
 			
 			String s = "BinaryStrategy";
-			if(strategyComboBox.getValue() != null) {
-				s = strategyComboBox.getValue().toString();
+			if(strategyChoicebox.getValue() != null) {
+				s = strategyChoicebox.getValue().toString();
 			} 
 			
 			switch (s) {
 			case "BinaryStrategy":
-				BinaryStrategy bStrategy = new BinaryStrategy();
-				try {
-					bStrategy.open(serDir + "products.ser");
-					for(Product p: currentProducts) {
-						bStrategy.writeObject(p);
-					}
-				} catch (IOException ioE) {
-					ioE.printStackTrace();
-				} finally {
-					if (bStrategy != null) {
-						try {
-							bStrategy.close();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}
+				strategy = new BinaryStrategy();
+				filename = serDir + "products.ser";
 				break;
 			case "XMLStrategy":
-				XMLStrategy xmlStrategy = new XMLStrategy();
-				try {
-					xmlStrategy.open(serDir + "products.xml");
-					for(Product p: currentProducts) {
-						xmlStrategy.writeObject(p);
-					}
-				} catch (IOException ioE) {
-					ioE.printStackTrace();
-				} finally {
-					if (xmlStrategy != null) {
-						try {
-							xmlStrategy.close();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}		
+				strategy = new XMLStrategy();
+				filename = serDir + "products.xml";
 				break;
 			case "XStreamStrategy":
-				XStreamStrategy xstreamStrategy = new XStreamStrategy();
-				try {
-					xstreamStrategy.open(serDir + "products.xml");
-					for(Product p: currentProducts) {
-						xstreamStrategy.writeObject(p);
-					}
-				} catch (IOException ioE) {
-					ioE.printStackTrace();
-				} finally {
-					if (xstreamStrategy != null) {
-						try {
-							xstreamStrategy.close();
-						} catch (Exception e) {
-							e.printStackTrace();
-						}
-					}
-				}		
+				strategy = new XStreamStrategy();
+				filename = serDir + "products.xml";
 				break;
 			case "JDBCStrategy":
-				JDBCConnector jdbcCon = new JDBCConnector();
-				if (!jdbcCon.isConnected()) {
-					if (!jdbcCon.connectDB()) {
-						System.out.println("Connected Database failed, cannot load product from database.");
-						return ;
-					}
-				} 
-				
-				for(Product p: currentProducts) {
-					jdbcCon.insert(p);
-				}
-
-				jdbcCon.closeConnection();
+				strategy = new JDBCStrategy();
 				break;
 			case "OpenJPAWithConfig":
-				JPAEntityManagerFactory withFac = new JPAEntityManagerFactory();
-				if (!withFac.setup(GetFacMethod.WithConfig)) {
-					System.out.println("OpenJPA setup with config failed.");
-					return ;
-				} else {
-					for(Product p: currentProducts) {
-						withFac.updateProduct(p);
-					}
-				}
-				
-				withFac.closeFactory();
+				strategy = new OpenJPAStrategy(OpenJPAStrategy.GetFacMethod.WithoutConfig);
 				break;
 			case "OpenJPAWithoutConfig":
-				JPAEntityManagerFactory Fac = new JPAEntityManagerFactory();
-				if (!Fac.setup(GetFacMethod.WithoutConfig)) {
-					System.out.println("OpenJPA setup without config failed.");
-					return ;
-				} else {
-					for(Product p: currentProducts) {
-						Fac.updateProduct(p);
-					}
-				}
-				
-				Fac.closeFactory();
-				break;
+				strategy = new OpenJPAStrategy(OpenJPAStrategy.GetFacMethod.WithConfig);
+				break;	
 			default:
 				break;
 			}	
+			if (strategy != null)	storeObjToDatabase(strategy, filename);
+			
+			// refreshing the Listview.
+			warenShowList.refresh();
 		});
 	}
 	
@@ -416,14 +299,21 @@ public class ViewShop {
 					System.out.println("Please intput a number with accepted format.");
 					return ;
 				}
-				try{
-					IDGenerator generator = new IDGenerator();
-					long productId = generator.generateId();
-					Product product = new fpt.shop.Product(productName, productId, productPrice, productCount);
-					modelShop.add(product);
-				} catch (IDOverflowException idException){
-					idException.printStackTrace();
-				}
+
+
+				Product product = new fpt.shop.Product(productName, productPrice, productCount);
+				modelShop.add(product);
+				
+				// Instead of IDGenerator we will generate ID by OpenJPA.
+//				try{
+//					IDGenerator generator = new IDGenerator();
+//					long productId = generator.generateId();
+//					Product product = new fpt.shop.Product(productName, productId, productPrice, productCount);
+//					modelShop.add(product);
+//				} catch (IDOverflowException idException){
+//					idException.printStackTrace();
+//				}
+				
 			}
 		});
 	}

@@ -103,7 +103,8 @@ public class ViewShop {
 		hBox.setPrefWidth(200);
 		hBox.setPadding(new Insets(10, 0, 0, 0));
 		vBox = new VBox();
-		vBox.setPrefWidth(300);
+		vBox.setPrefWidth(220);
+		vBox.setPadding(new Insets(0, 10, 0, 0));
 		
 		strategyChoicebox = new ChoiceBox<String>();
 		strategyChoicebox.setPrefWidth(300);
@@ -250,6 +251,7 @@ public class ViewShop {
 				break;
 			case "JDBCStrategy":
 				strategy = new JDBCStrategy();
+				((JDBCStrategy)strategy).printMetaData();
 				break;
 			case "OpenJPAWithConfig":
 				strategy = new OpenJPAStrategy(OpenJPAStrategy.GetFacMethod.WithoutConfig);

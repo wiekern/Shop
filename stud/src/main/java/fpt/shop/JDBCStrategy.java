@@ -21,6 +21,7 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 	private String[] types = new String[] {"TABLE"};
 	private Connection dbConnection = null;
 	private boolean isConnected = false;
+	private DatabaseMetaData metaData = null;
 	
 	public JDBCStrategy() {
 		
@@ -32,6 +33,26 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 	
 	public Connection getDbConnection() {
 		return dbConnection;
+	}
+	
+	public void printMetaData() {
+		if (!isConnected) {
+			connectDB();
+		}
+		
+		try {
+			metaData = dbConnection.getMetaData();
+			System.out.println("Datenbank URL: " + metaData.getURL());
+			System.out.println("Username: " + metaData.getUserName());
+			System.out.println("All tables: ");
+			ResultSet rs = metaData.getTables(null, "public", "%", types);
+			while(rs.next()) {
+				System.out.print(rs.getString("TABLE_NAME") + " ");
+			}
+		} catch (SQLException e) {
+			System.out.println("JDBC: print MetaData failed.");
+			e.printStackTrace();
+		}
 	}
 	
 	public boolean connectDB() {
@@ -63,21 +84,6 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 				e.printStackTrace();
 				System.out.println(e.getClass().getName() + ": " + e.getMessage());
 			}
-		}
-	}
-	
-	public void showAlltables() {
-		if (!isConnected) return;
-		
-		DatabaseMetaData metaData = null;
-		try {
-			metaData = dbConnection.getMetaData();
-			ResultSet rs = metaData.getTables(null, "public", "%", types);
-			while(rs.next()) {
-				System.out.println(rs.getString("TABLE_NAME"));
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
 		}
 	}
 	
@@ -132,7 +138,6 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 		int pQuantity;
 		int pId;
 		try {
-			System.out.println(readQuery);
 			readProduct = dbConnection.prepareStatement(readQuery);
 			readProduct.setLong(1, productId);
 			rs = readProduct.executeQuery();

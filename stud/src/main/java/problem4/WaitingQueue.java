@@ -8,7 +8,7 @@ public class WaitingQueue<E> {
 	
 	private Node first = null, last = null;
 	private int count = 0;
-
+	
 	
 	public boolean isEmpty() {
 		return first == null;

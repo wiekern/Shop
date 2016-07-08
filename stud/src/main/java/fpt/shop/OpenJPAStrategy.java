@@ -106,7 +106,6 @@ public class OpenJPAStrategy extends AbstractDatabaseStrategy {
 		Query query = em.createQuery("SELECT c FROM Product c WHERE c.id=" + productId);
 		List resultList = query.getResultList();
 		for (Object o : resultList) {
-			System.out.println(o);
 			product = (Product) o;
 		}
 		t.commit();
@@ -147,6 +146,7 @@ public class OpenJPAStrategy extends AbstractDatabaseStrategy {
 		try {
 			long id = IDGenerator.generateId();
 			if (id > 10) {
+				IDGenerator.resetIDCounter();
 				return null;
 			}
 			product = readProduct(id);

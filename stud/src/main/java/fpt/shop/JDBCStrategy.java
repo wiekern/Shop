@@ -92,7 +92,7 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 		ResultSet idRS = null;
 		String insertQuery = "INSERT INTO " + tableName + " (name, price, quantity)"
 				+ "VALUES(?,?,?)";
-		String updateQuery = "UPDATE "+ tableName +" SET name=" + name + ",price=" + price + ",quantity=" + quantity + "WHERE id=?";
+		String updateQuery = "UPDATE "+ tableName +" SET (name, price, quantity)" + "VALUES(?,?,?)" + "WHERE id=?";
 		long id = -1;
 		//String productIdQuery = "SLECT id FROM products WHERE name=" + name + ",price=" + price + "quantity=" + quantity;
 		try {
@@ -100,7 +100,6 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 			insertProduct.setString(1, name);
 			insertProduct.setDouble(2, price);
 			insertProduct.setInt(3, quantity);
-			//System.out.println("Hallo.");
 			if (!insertProduct.execute()) {
 				System.out.println("insert product via JDBC failed, try to update it.");
 				idRS = insertProduct.getGeneratedKeys();
@@ -108,7 +107,10 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 					id = idRS.getLong(1);
 					System.out.println("Generated id=" + id + ", to update this record.");
 					PreparedStatement updateProduct = dbConnection.prepareStatement(updateQuery);
-					updateProduct.setLong(1, id);
+					updateProduct.setString(1, name);
+					updateProduct.setDouble(2, price);
+					updateProduct.setInt(3, quantity);
+					updateProduct.setLong(4, id);
 				}
 			};
 		} catch (SQLException e) {
@@ -146,7 +148,7 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 				pPrice = rs.getDouble("price");
 				pQuantity = rs.getInt("quantity");
 				pId = rs.getInt("id");
-				System.out.println("name:" + pName + " price:" + pPrice + " quantity:" + pQuantity + " id:" + pId);
+				//System.out.println("name:" + pName + " price:" + pPrice + " quantity:" + pQuantity + " id:" + pId);
 				product = new Product(pName, pId, pPrice, pQuantity);
 			}
 		} catch (SQLException e) {
@@ -165,6 +167,7 @@ public class JDBCStrategy extends AbstractDatabaseStrategy {
 		try {
 			long id = IDGenerator.generateId();
 			if (id > 10) {
+				IDGenerator.resetIDCounter();
 				return null;
 			}
 			product = readProduct(id);

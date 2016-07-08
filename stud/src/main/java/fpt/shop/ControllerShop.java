@@ -2,8 +2,6 @@ package fpt.shop;
 
 import fpt.shop.ModelShop;
 import fpt.shop.ViewShop;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ListChangeListener;
 
 public class ControllerShop {

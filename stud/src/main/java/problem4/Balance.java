@@ -43,7 +43,7 @@ public class Balance {
 			}
 			
 			if (g.get(max) >= 0) {
-				System.out.print("Kasse " + (max + 1) + ": " + g.get(max) + "Euro");
+				System.out.print("Kasse " + (max + 1) + ": " + g.get(max) + "EUR");
 				if (k > 0) {
 					System.out.print(", ");
 				}

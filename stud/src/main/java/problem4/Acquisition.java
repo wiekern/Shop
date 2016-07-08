@@ -34,10 +34,29 @@ public class Acquisition implements Runnable {
 	 * i.e. 6 customers in them, return cashpoint 0.
 	 */
 	public Cashpoint currentAvailableCashpoint() {
+		int customerCount = 6;
+		Cashpoint cashpoint = null;
 		for(Cashpoint cp: cashpointArray) {
 			if (!cp.isLimited()) {
-				return cp;
+				if ((cp.size() < customerCount) && (cp.size() > 0)) {
+					customerCount = cp.size();
+					cashpoint = cp; 
+				}
 			}
+		}
+		
+		if (cashpoint == null) {
+			for(Cashpoint cp: cashpointArray) {
+				if (!cp.isLimited()) {
+					System.out.println("+++++++++ New Kasse +++++++++");
+					System.out.println("All opened Kassen limited, opening Kasse " + (cp.getId() + 1));
+					System.out.println("+++++++++ End Kasse +++++++++");
+					return cp;
+				}
+			}
+		} else {
+			System.out.println("Current available Kasse " + (cashpoint.getId() + 1));
+			return cashpoint;
 		}
 		
 		if(cashpointArray[0].isFull()) {
@@ -50,7 +69,6 @@ public class Acquisition implements Runnable {
 	@Override
 	public void run() {
 		initArrays();
-		//if Kunden in einer Kasse >7, stoppen
 		int customerCount = 1;
 		Cashpoint currCashpoint = currentAvailableCashpoint();
 		Customer customer;
@@ -61,25 +79,24 @@ public class Acquisition implements Runnable {
 					System.out.println("Kasse " + (currCashpoint.getId() + 1) + " is full. exit and no more customers.");
 					return ;
 				} else if (currCashpoint.isLimited()) {
-					System.out.println("+++++++++ New Kasse +++++++++");
-					System.out.println("[Kasse " + (currCashpoint.getId() + 1) + "] has 6 customers, opening a new Kasse.");
-					System.out.println("+++++++++ End Kasse +++++++++");
+					System.out.println("[Kasse " + (currCashpoint.getId() + 1) + "] has 6 customers, to choose a available Kasse.");
 					currCashpoint = currentAvailableCashpoint();
 				}
 				
-				customer = new Customer("Customer" + customerCount, Math.round(Math.random()*90));
+				Thread.sleep(sleepTime);
+				customer = new Customer("Customer" + customerCount, Math.round(Math.random()*90) + 1);
 				currCashpoint.enqueue(customer);
+				System.out.println("Acquisition spent " + sleepTime/1000 + " seconds. Puted customer in Kasse " + (currCashpoint.getId() + 1));
 				customerCount++;
+				
 				if (!cashpointThreadArray[currCashpoint.getId()].isAlive()) {
-					System.out.println("[Kasse " + (currCashpoint.getId() + 1) + "] opened.");
 					cashpointThreadArray[currCashpoint.getId()].start();
 				}		
-				// Wartezeit
-				Thread.sleep(sleepTime);
+				
 			} catch (InterruptedException e) {
 				System.out.println("A interrupt came.");
 			}
-			System.out.println("Acquisition spent " + sleepTime/1000 + " seconds.");
+			
 		}
 	}
 }

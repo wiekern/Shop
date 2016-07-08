@@ -2,20 +2,25 @@ package fpt.shop;
 
 import java.util.ArrayList;
 import fpt.com.Product;
+import javafx.collections.ObservableList;
 
 public class Order extends ArrayList<Product> implements fpt.com.Order {
-	/**
-	 * 
-	 */
-	private static final long serialVersionUID = 1L;
-	private double sum;
-	private int quantity;
+	private static final long serialVersionUID = -2137139322489860936L;
+	private int numberOfProducts = 0;
+	private double sum = 0.0f;
+
+	public Order() {
+	}
+	
+	public Order(ObservableList<Product> obList) {
+		super(obList);
+	}
 
 	@Override
-	public boolean add(Product e) {
-		// TODO Auto-generated method stub
-		if (super.add(e)) {
-			this.sum += e.getPrice();
+	public boolean add(Product p) {
+		if (super.add(p)) {
+			this.numberOfProducts += p.getQuantity();
+			this.sum += p.getPrice() * p.getQuantity();
 			return true;
 		} else {
 			return false;
@@ -24,9 +29,9 @@ public class Order extends ArrayList<Product> implements fpt.com.Order {
 
 	@Override
 	public boolean delete(Product p) {
-		// TODO Auto-generated method stub
 		if (super.remove(p)) {
-			this.sum -= p.getPrice();
+			this.numberOfProducts -= p.getQuantity();
+			this.sum -= p.getPrice() * p.getQuantity();
 			return true;
 		} else {
 			return false;
@@ -35,13 +40,11 @@ public class Order extends ArrayList<Product> implements fpt.com.Order {
 
 	@Override
 	public int size() {
-		// TODO Auto-generated method stub
 		return this.size();
 	}
 
 	@Override
 	public Product findProductById(long id) {
-		// TODO Auto-generated method stub
 		for(Product product: this){
 			if (product.getId() == id) {
 				return product;
@@ -52,7 +55,6 @@ public class Order extends ArrayList<Product> implements fpt.com.Order {
 	
 	@Override
 	public Product findProductByName(String name) {
-		// TODO Auto-generated method stub
 		for(Product product: this){
 			if (product.getName() == name) {
 				return product;
@@ -63,14 +65,11 @@ public class Order extends ArrayList<Product> implements fpt.com.Order {
 
 	@Override
 	public double getSum() {
-		// TODO Auto-generated method stub
 		return this.sum;
 	}
 
 	@Override
 	public int getQuantity() {
-		// TODO Auto-generated method stub
-		return this.quantity;
+		return this.numberOfProducts;
 	}
-
 }

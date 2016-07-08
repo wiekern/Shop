@@ -7,9 +7,19 @@ import javafx.collections.ObservableList;
 
 public class ModelShop extends ModifiableObservableListBase<Product> {
 	private final ObservableList<Product> delegate;
+	private final ObservableList<Product> orderList;
+	private static ModelShop instance = null;
+	
+	public static ModelShop getInstance() {
+		if (instance == null) {
+			instance = new ModelShop();
+		}
+		return instance;
+	}
 	
 	public ModelShop() {
 		delegate = FXCollections.observableArrayList(new ProductList());
+		orderList = FXCollections.observableArrayList(new Order());
 	}
 	
 	public ObservableList<Product> getDelegate() {
@@ -47,6 +57,10 @@ public class ModelShop extends ModifiableObservableListBase<Product> {
 	@Override
 	protected Product doRemove(int index) {
 		return delegate.remove(index);
+	}
+
+	public ObservableList<Product> getOrderList() {
+		return this.orderList;
 	}
 
 }

@@ -8,51 +8,30 @@ import javafx.stage.Stage;
 public class MainClass extends Application {
 
 	public static void main(String[] args) {
-		// TODO Auto-generated method stub
 		launch(args);
 	}
 
 	@Override
 	public void start(Stage primaryStage) throws Exception {
-		ModelShop modelShop = new ModelShop();
+		ModelShop modelShop = ModelShop.getInstance();
 		ViewShop viewShop = new ViewShop(modelShop);
 		viewShop.makeUp();
-		
-		Scene rootScene = new Scene(viewShop.getMainPane(), 400, 400);
-		
 		ControllerShop cShop = new ControllerShop();
 		cShop.link(modelShop, viewShop); 
+		Scene rootScene = new Scene(viewShop.getMainPane(), 400, 400);
 		
 		Stage customerStage = new Stage();
-		ViewCustomer viewCustomer = new ViewCustomer();
-		Scene customerScene = new Scene(viewCustomer.getMainPane(), 500, 400);
-		customerStage.setScene(customerScene);
-		customerStage.show();
+		ViewCustomer viewCustomer = new ViewCustomer(modelShop);
+		ControllerCustomer cCustomer = new ControllerCustomer();
+		cCustomer.link(viewCustomer, modelShop);
+		Scene customerScene = new Scene(viewCustomer.getMainPane(), 600, 400);
 		
+		customerStage.setScene(customerScene);
+		customerStage.show();	
 		primaryStage.setScene(rootScene);
 		primaryStage.show();
-//		
-//		//Database
-//		JDBCConnector connector = new JDBCConnector();
-//		if (connector.connectDB()) {
-//			System.out.println("connected successfully.");
-//			connector.showAlltables();
-//		}
-//		
-//		connector.closeConnection();
 		
-//		Product product = new Product("yafei", 1, 1);
-//		JPAEntityManagerFactory emFac = new JPAEntityManagerFactory();
-//		emFac.JPAPersistenceProduct(product, GetFacMethod.WithConfig);
-//		
-//		JDBCConnector connector = new JDBCConnector();
-//		if (connector.connectDB()) {
-//			System.out.println("connected successfully.");
-//			Product p = connector.read(1);
-//			System.out.println(p.getName());
-//		}
-		
-		
+
 	}
 
 }

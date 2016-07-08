@@ -3,6 +3,10 @@ package fpt.shop;
 public class IDGenerator {
 	private static long idCounter = 0;
 	
+	public static void resetIDCounter() {
+		idCounter = 0;
+	}
+	
 	// id range: [1,999998]
 	public static long generateId() throws IDOverflowException {
 		if (idCounter == 999999) {

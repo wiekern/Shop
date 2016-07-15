@@ -1,13 +1,18 @@
 package fpt.shop;
 
+import java.rmi.Naming;
+import java.util.List;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
+import fpt.chat.ChatClient;
+import fpt.chat.ChatService;
 import fpt.com.Product;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.EventHandler;
 import javafx.geometry.HPos;
+import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
@@ -18,11 +23,14 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TableCell;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ButtonBar.ButtonData;
-import javafx.scene.control.TableColumn.CellEditEvent;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.util.Callback;
 
 public class ViewCustomer {
@@ -32,6 +40,7 @@ public class ViewCustomer {
 	private Button btnBuy;
 	private Button btnAddWare;
 	private TableView<Product> productTableView;
+	
 	private Dialog<User> loginDialog;
 	private Label labelName;
 	private Label labelPassword;
@@ -40,40 +49,103 @@ public class ViewCustomer {
 	private GridPane loginGrid;
 	private ButtonType btnLogin;
 	private Label clock;
+	private Button btnChat;
+	private TextField clientNameText;
+	private TextField buyQuantityText;
+	private HBox buttons;
+	
+	private Dialog<TextArea> chatDialog;
+	private GridPane chatGrid;
+	private TextArea chatArea;
+	private TextField msgInput;
+	private Button btnSendMsg;
+	private ButtonType btnCloseChat;
+	private HBox sendMsgHBox;
+	
 	private TCPClient tcpClient;
 	
+	private ChatService chatServiceRemote;
+	private ChatClient chatClient;
+
 	public ViewCustomer() {
 		mainPane = new GridPane();
-		clock = new Label("zeit");
-		productTableView = new TableView<>();
-		productTableView.setEditable(true);
-		productListView = new ListView<>();
-		productListView.setPrefWidth(350);
-		TableColumn<Product, String> nameCol = new TableColumn<>("Name");
-		nameCol.setCellValueFactory(new PropertyValueFactory<Product, String>("name"));
-		TableColumn<Product, Double> priceCol = new TableColumn<>("Price");
-		priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
-		TableColumn<Product, Integer> buyCountCol = new TableColumn<>("Count");
-		buyCountCol.setCellValueFactory(new PropertyValueFactory<Product, Integer>("quantity"));
-		buyCountCol.setCellFactory(new Callback<TableColumn<Product, Integer>, TableCell<Product, Integer>>() {
-            public TableCell<Product, Integer> call(TableColumn<Product, Integer> p) {
-                TableCell<Product, Integer> cell = new TableCell<Product, Integer>() {
-                    @Override
-                    public void updateItem(Integer item, boolean empty) {
-                        super.updateItem(item, empty);
-                        setText(empty ? null : item.toString());
-                    }
-                };
-				return cell;
-            }
-		});
-//		buyCountCol.setOnEditCommit(new EventHandler<TableColumn.CellEditEvent<Product,Integer>>() {
-//			@Override
-//			public void handle(CellEditEvent<Product, Integer> event) {
-//				((Product) event.getTableView().getItems().get(event.getTablePosition().getRow())).setQuantity(event.getNewValue());
-//			}
-//		});
+		clock = new Label();
 		
+		productTableViewInit();
+		loginDialogInit();
+		
+		mainPane.add(productTableView, 1, 0);
+		mainPane.add(productListView, 0, 0);
+		
+		buttons = new HBox(5);
+		btnBuy = new Button("Buy");
+		btnAddWare = new Button("Add");
+		btnChat = new Button("Login");
+		clientNameText = new TextField();
+		clientNameText.setPromptText("login name");
+		clientNameText.setPrefWidth(100);
+		buyQuantityText = new TextField();
+		buyQuantityText.setPromptText("buy number");
+		buyQuantityText.setPrefWidth(100);
+		buttons.getChildren().add(buyQuantityText);
+		buttons.getChildren().add(btnAddWare);
+		buttons.getChildren().add(clientNameText);
+		buttons.getChildren().add(btnChat);
+		
+		mainPane.add(buttons, 0, 1);
+		mainPane.add(clock, 1, 1);
+		mainPane.add(btnBuy, 1, 1);
+		GridPane.setHalignment(btnBuy, HPos.RIGHT);
+		GridPane.setHalignment(btnAddWare, HPos.LEFT);
+		
+		chatDialogInit();
+	}
+	
+	public ViewCustomer(ModelShop model) {
+		this();
+		this.modelShop = model;
+	}
+	
+	
+	protected void chatDialogInit() {
+		chatDialog = new Dialog<>();
+		msgInput = new TextField();
+		msgInput.setPrefWidth(250);
+		chatArea = new TextArea();
+		chatArea.setPrefWidth(250);
+		chatArea.setEditable(false);
+		chatArea.setFocusTraversable(false);
+		chatArea.setWrapText(true);
+		btnSendMsg = new Button("Send");
+		btnCloseChat = new ButtonType("Exit", ButtonData.CANCEL_CLOSE);
+		chatDialog.getDialogPane().getButtonTypes().add(btnCloseChat);
+		sendMsgHBox = new HBox(5);
+		sendMsgHBox.getChildren().add(msgInput);
+		sendMsgHBox.getChildren().add(btnSendMsg);
+		chatGrid = new GridPane();
+		chatGrid.add(chatArea, 0, 0);
+		chatGrid.add(sendMsgHBox, 0, 1);
+		chatDialog.getDialogPane().setContent(chatGrid);
+		chatDialog.setOnCloseRequest((e) -> {
+			try {
+				chatServiceRemote.logout(chatClient.getName());
+			} catch (Exception e1) {
+				System.out.println("User: " + chatClient.getName() + "logout failed.");
+				e1.printStackTrace();
+			}
+			chatDialog.close();
+		});
+		
+		// support Enter to send message.
+		msgInput.addEventHandler(KeyEvent.KEY_PRESSED, ev -> {
+			if (ev.getCode() == KeyCode.ENTER) {
+				btnSendMsg.fire();
+				ev.consume();
+			}
+		});
+	}
+	
+	protected void loginDialogInit() {
 		loginGrid = new GridPane();
 		loginDialog = new Dialog<>();
 		loginDialog.setHeaderText("Login");
@@ -86,8 +158,18 @@ public class ViewCustomer {
 		loginGrid.add(username, 2, 1);
 		loginGrid.add(labelPassword, 1, 2);
 		loginGrid.add(password, 2, 2);
-		loginDialog.getDialogPane().setContent(loginGrid);
 		loginDialog.getDialogPane().getButtonTypes().add(btnLogin);
+		Node btnLoginTmp = loginDialog.getDialogPane().lookupButton(btnLogin);
+		btnLoginTmp.setDisable(true);
+		
+		username.textProperty().addListener((ob, oldValue, newValue) -> {
+			btnLoginTmp.setDisable(newValue.trim().isEmpty());
+		});
+		
+		loginDialog.getDialogPane().setContent(loginGrid);
+		
+		// Default focus on name
+		Platform.runLater(() -> username.requestFocus());
 		
 		loginDialog.setResultConverter(new Callback<ButtonType, User>() {
 
@@ -96,6 +178,7 @@ public class ViewCustomer {
 				if (param == btnLogin) {
 					User u = new User(username.getText(), password.getText());
 					if (u.getUsername().equals("admin") && u.getPasswrod().equals("admin")) {
+						System.out.println("name and password right.");
 						return u;
 					} else {
 						return null;
@@ -104,23 +187,35 @@ public class ViewCustomer {
 				return null;
 			}
 		});
-		
-		productTableView.getColumns().addAll(nameCol, priceCol, buyCountCol);
-		
-		mainPane.add(productTableView, 1, 0);
-		mainPane.add(productListView, 0, 0);
-		btnBuy = new Button("Buy");
-		btnAddWare = new Button("Add");
-		mainPane.add(btnAddWare, 0, 1);
-		mainPane.add(clock, 1, 1);
-		mainPane.add(btnBuy, 1, 1);
-		GridPane.setHalignment(btnBuy, HPos.RIGHT);
-		GridPane.setHalignment(btnAddWare, HPos.LEFT);
 	}
 	
-	public ViewCustomer(ModelShop model) {
-		this();
-		this.modelShop = model;
+	protected void productTableViewInit() {
+		productTableView = new TableView<>();
+		productTableView.setEditable(true);
+		productListView = new ListView<>();
+		productListView.setPrefWidth(350);
+		
+		TableColumn<Product, String> nameCol = new TableColumn<>("Name");
+		nameCol.setCellValueFactory(new PropertyValueFactory<Product, String>("name"));
+		TableColumn<Product, Double> priceCol = new TableColumn<>("Price");
+		priceCol.setCellValueFactory(new PropertyValueFactory<>("price"));
+		TableColumn<Product, Integer> buyCountCol = new TableColumn<>("Count");
+		buyCountCol.setCellValueFactory(new PropertyValueFactory<Product, Integer>("quantity"));
+		buyCountCol.setEditable(true);
+		buyCountCol.setCellFactory(new Callback<TableColumn<Product, Integer>, TableCell<Product, Integer>>() {
+            public TableCell<Product, Integer> call(TableColumn<Product, Integer> p) {
+                TableCell<Product, Integer> cell = new TableCell<Product, Integer>() {
+                    @Override
+                    public void updateItem(Integer item, boolean empty) {
+                        super.updateItem(item, empty);
+                        setText(empty ? null : item.toString());
+                    }
+                };
+				return cell;
+            }
+		});
+
+		productTableView.getColumns().addAll(nameCol, priceCol, buyCountCol);
 	}
 	
 	public Label getClock() {
@@ -139,12 +234,50 @@ public class ViewCustomer {
 		return this.productListView;
 	}
 	
+	public void setBtnActionSendmsg() {
+		btnSendMsg.setOnAction((v) -> {
+			try {
+				chatServiceRemote.send(msgInput.getText());
+				chatArea.appendText(chatClient.getMsgFromServer() + "\n");
+				chatArea.setScrollTop(Double.MAX_VALUE);
+			} catch (Exception e) {
+				e.printStackTrace();
+				System.out.println("Client send message to server failed.");
+			}
+		});
+	}
+	
+	public void setBtnActionChat() {
+		btnChat.setOnAction((v) -> {
+			try {
+	        	String name = clientNameText.getText();
+	        	setChatServiceRemote((ChatService)Naming.lookup("//localhost:1099/ChatServer"));
+	        	List<String> userList = chatServiceRemote.getUserList();
+	        	for(String s: userList) {
+	        		if (s.equals(name)) {
+	        			System.out.println("User existed, please choose a different name.");
+	        			return ;
+	        		}
+	        	}
+	        	
+	        	setChatClient(new ChatClient(name));
+	        	Naming.rebind("//localhost:1099/" + name, getChatClient());
+				chatServiceRemote.login(clientNameText.getText());
+			} catch (Exception e) {
+				System.out.println();
+				e.printStackTrace();
+			}
+			chatDialog.showAndWait();
+		});
+	}
+	
 	public void setBtnActionBuy() {
 		btnBuy.setOnAction((v) -> {
 			Order order = new Order();
 			ObservableList<Product> ol = FXCollections.observableArrayList(productTableView.getItems());
 			for (Product p: ol) {
 				order.add(p);
+				modelShop.getOrderList().remove(p);
 			}
 			tcpClient.sendOrder(order);
 		});
@@ -152,19 +285,51 @@ public class ViewCustomer {
 	
 	public void setBtnActionAddWare() {
 		btnAddWare.setOnAction((v) -> {
+			Product selectedProduct = productListView.getSelectionModel().getSelectedItem();
+			if (selectedProduct == null) {
+				System.out.println("No selected product.");
+				return ;
+			}
+			
 			// Test user and password.
 			Optional<User> loginResult = loginDialog.showAndWait();
 			if (!loginResult.isPresent()) {
 				System.out.println("User or Password incorrect.");
-				return ;
-			} else {			
-				Product selectedProduct = productListView.getSelectionModel().getSelectedItem();
-				if (selectedProduct != null) {
-					Product product = new fpt.shop.Product(selectedProduct.getName(), selectedProduct.getId(), selectedProduct.getPrice(), 1);
-					modelShop.getOrderList().add(product);
-					//productTableView.getItems().add(product);
+			} else {
+				ObservableList<Product> obl = modelShop.getOrderList();
+				int amount = 0;
+				int stockQuantity = selectedProduct.getQuantity();;
+				try{
+					amount = Integer.parseInt(buyQuantityText.getText());
+				} catch (NumberFormatException e) {
+					System.out.println("Please input a valid number.");
 				}
-			}
+				
+				if ((amount > 0) && (amount <= stockQuantity)) {
+					for (Product p: obl) {
+						if (p.getName().equals(selectedProduct.getName())) {
+							if (p.getQuantity() + amount > stockQuantity) {
+								System.out.println("You have already bought some. Stock is not enough.");
+							} else {
+								p.setQuantity(p.getQuantity() + amount);
+							}
+							username.clear();
+							password.clear();
+							loginDialog.setResult(null);
+							return ;
+						}
+					}
+					
+					Product product = new fpt.shop.Product(selectedProduct.getName(), selectedProduct.getId(), selectedProduct.getPrice(), amount);
+					modelShop.getOrderList().add(product);
+				} else {
+					System.out.println("Stock is not enough.");
+				}
+				
+				username.clear();
+				password.clear();
+				loginDialog.setResult(null);
+			} 
 		});
 	}
 	
@@ -190,24 +355,6 @@ public class ViewCustomer {
 		productListView.setCellFactory(cb);
 	}
 	
-//	public void setProductTableViewCellFactory() {
-//		Callback<ListView<Order>, ListCell<Order>> cb = new Callback<TableView<Order>, ListCell<Order>>() {
-//
-//			@Override
-//			public ListCell<Order> call(ListView<Order> param) {
-//				ListCell<Order> cell = new ListCell<Order>() {
-//					@Override
-//					protected void updateItem(Order item, boolean empty) {
-//						super.updateItem(item, empty);
-//
-//					}
-//				};
-//				return cell;
-//			}
-//		};
-//		productListView.setCellFactory(cb);
-//	}
-
 	public TCPClient getTcpClient() {
 		return tcpClient;
 	}
@@ -215,27 +362,21 @@ public class ViewCustomer {
 	public void setTcpClient(TCPClient tcpClient) {
 		this.tcpClient = tcpClient;
 	}
+
+	public ChatService getChatServiceRemote() {
+		return chatServiceRemote;
+	}
+
+	public void setChatServiceRemote(ChatService service) {
+		this.chatServiceRemote = service;
+	}
+	
+	public ChatClient getChatClient() {
+		return chatClient;
+	}
+
+	public void setChatClient(ChatClient chatClient) {
+		this.chatClient = chatClient;
+	}
 }
 
-class IntegerEditCell extends TableCell<Product, Integer> {
-	private final TextField textField = new TextField();
-	private final Pattern  intPattern = Pattern.compile("\\d+");
-	
-	public IntegerEditCell() {
-		textField.focusedProperty().addListener((obs, wasFocused, isNowFocused) -> {
-			if (!isNowFocused) {
-				
-			}
-		});
-		textField.setOnAction(event -> {
-			
-		});
-	}
-	
-	private void processEdit() {
-		String text = textField.getText();
-		if (intPattern.matcher(text).matches()) {
-			
-		}
-	}
-}

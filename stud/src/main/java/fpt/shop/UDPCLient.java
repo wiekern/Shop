@@ -1,6 +1,7 @@
 package fpt.shop;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -36,7 +37,13 @@ public class UDPCLient {
 				} 
 				String rcvData = null;
 				String command = "time";
-				sendBuff = command.getBytes();
+				try {
+					sendBuff = command.getBytes("UTF-8");
+				} catch (UnsupportedEncodingException e1) {
+					e1.printStackTrace();
+					System.out.println("Client: time command encoded in UTF-8 failed.");
+				}
+		
 				DatagramPacket sendPacket = new DatagramPacket(sendBuff, sendBuff.length, iAddress, 6667);
 				DatagramPacket recvPacket = new DatagramPacket(recvBuff, recvBuff.length);
 				while (true) {

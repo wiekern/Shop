@@ -1,7 +1,8 @@
 package fpt.shop;
 
-import java.io.DataOutputStream;
 import java.io.ObjectInputStream;
+
+import fpt.chat.ChatMain;
 
 //Platform.runLater 
 //UDP Server
@@ -9,6 +10,7 @@ import java.io.ObjectInputStream;
 public class Warehouse {
 	
 	public static void main(String[] args) {
+		ChatMain.main(args);
 		System.out.println("Warehouse");
 		UDPTimeServer timeServer = new UDPTimeServer();
 		timeServer.UDPServer();
@@ -21,7 +23,6 @@ public class Warehouse {
 				ObjectInputStream inputFromClient;
 				try {
 					inputFromClient = new ObjectInputStream(event.getInputStream());
-					//DataOutputStream outputToClient = new DataOutputStream(event.getOutputStream());
 					while(true) {
 						Order order = (Order) inputFromClient.readObject();
 						orderServer.acceptOrder(order);

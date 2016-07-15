@@ -24,8 +24,11 @@ public class ControllerCustomer {
 			}
 		});
 		
+		vCustomer.setBtnActionChat();
+		vCustomer.setBtnActionSendmsg();
 		vCustomer.setBtnActionBuy();
 		vCustomer.setBtnActionAddWare();
+		
 		UDPCLient udpClient = new UDPCLient();  
 		udpClient.setUDPListener(date -> {
 	 		Platform.runLater(() -> {
@@ -36,6 +39,7 @@ public class ControllerCustomer {
         
         TCPClient tcpClient = new TCPClient();
         vCustomer.setTcpClient(tcpClient);
+        
 	}
 
 }

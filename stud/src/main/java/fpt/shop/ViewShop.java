@@ -46,14 +46,6 @@ public class ViewShop {
 	private Button btnStore;
 	private HBox strategyHBox;
 	private final String serDir = Paths.get(".").toAbsolutePath().normalize().toString() + "/";
-//	private static ViewShop instance = null;
-//	
-//	public static ViewShop getInstance() {
-//		if (instance == null) {
-//			instance = new ViewShop(ModelShop.getInstance());
-//		}
-//		return instance;
-//	}
 	
 	public ViewShop(ModelShop model) {
 		initialize();

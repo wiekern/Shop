@@ -1,5 +1,8 @@
 package fpt.shop;
 
+import java.io.BufferedInputStream;
+import java.io.EOFException;
+import java.io.IOException;
 import java.io.ObjectInputStream;
 
 import fpt.chat.ChatMain;
@@ -28,9 +31,13 @@ public class Warehouse {
 						orderServer.acceptOrder(order);
 						printWarehouseStatus(orderServer);
 					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}	
+				} catch (IOException e) {
+					System.out.println("TCP Server reads data from client failed. Maybe Client have closed the connection.");
+					return ;
+				} catch (ClassNotFoundException e) {
+					System.out.println("Class Order not found.");
+					return ;
+				}
 			}).start();
 		});
 	}

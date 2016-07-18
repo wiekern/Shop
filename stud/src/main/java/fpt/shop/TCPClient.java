@@ -1,5 +1,6 @@
 package fpt.shop;
 
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.net.ConnectException;
@@ -11,6 +12,10 @@ public class TCPClient {
 	private String serverHost = "localhost";
 	private int serverPort = 6666;
 	private ObjectOutputStream ois = null;
+	public ObjectOutputStream getOis() {
+		return ois;
+	}
+
 	private boolean wasInit = false;
 	
 	TCPClient() {
@@ -28,8 +33,7 @@ public class TCPClient {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
-		}	
-
+		}
 		wasInit = true;
 	}
 	
@@ -41,6 +45,7 @@ public class TCPClient {
 		if (ois != null) {
 			try {
 				ois.writeObject(order);
+				ois.flush();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -51,6 +56,7 @@ public class TCPClient {
 		if (sock != null) {
 			try {
 				sock.close();
+				wasInit = false;
 			} catch (IOException e) {
 				System.out.println("Closing TCP connection in Client failed.");
 				e.printStackTrace();

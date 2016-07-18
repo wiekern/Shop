@@ -49,17 +49,14 @@ public class UDPCLient {
 				while (true) {
 					try {
 						dSocket.send(sendPacket);
-						//System.out.println("UDP Client: Sent packet ok.");
 					} catch (IOException e) {
 						System.out.println("Sent packet to UDP server failed.");
 						e.printStackTrace();
 					}
 					
 					try {
-						//System.out.println("UDP Client: waiting to receive.");
 						dSocket.receive(recvPacket);
 						rcvData = new String(recvPacket.getData());
-						//System.out.println("UDP Client:" + rcvData);
 						getNetworkListener().updateTime(rcvData);
 						Thread.sleep(1000);
 					} catch (IOException e) {
@@ -79,7 +76,6 @@ public class UDPCLient {
 
 	public void setUDPListener(UDPFetchtimeListener nl) {
 		this.networkListener = nl;
-		
 	}
 		
 }

@@ -29,7 +29,8 @@ public class ControllerCustomer {
 		vCustomer.setBtnActionBuy();
 		vCustomer.setBtnActionAddWare();
 		
-		UDPCLient udpClient = new UDPCLient();  
+		UDPCLient udpClient = new UDPCLient();
+		// UDP Client is a Listener for updating time.
 		udpClient.setUDPListener(date -> {
 	 		Platform.runLater(() -> {
 	 			vCustomer.getClock().setText(date);
@@ -37,6 +38,7 @@ public class ControllerCustomer {
         });	
 		udpClient.fetchTime();
         
+		// includes a reference of TCP client to send order to warehouse.
         TCPClient tcpClient = new TCPClient();
         vCustomer.setTcpClient(tcpClient);
         

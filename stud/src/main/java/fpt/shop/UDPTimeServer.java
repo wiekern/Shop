@@ -28,14 +28,10 @@ public class UDPTimeServer {
 							int clientPort = rcvPacket.getPort();
 							System.out.println("Client Port:" + clientPort + ", IP:" + rcvPacket.getAddress().toString());
 							String strData = new String(rcvPacket.getData());
-							//System.out.println(strData + "len: " + strData.substring(0, 5).length() + "ss:" + strData.substring(0, 5) + "time length: " + "times".length());
 							if (strData.substring(0, 4).equals("time")) {
 								Date localDate = new Date();
 								SimpleDateFormat simpleDateFormat = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
 								sendBuffer = (simpleDateFormat.format(localDate)).getBytes("UTF-8");
-								//System.out.println(localDate.toString());
-								//System.out.println(simpleDateFormat.toString());
-								//System.out.println(sendBuffer);
 								DatagramPacket sendPacket = new DatagramPacket(sendBuffer, sendBuffer.length, clientIA, clientPort);
 								dSocket.send(sendPacket);
 							} else {
@@ -53,8 +49,6 @@ public class UDPTimeServer {
 					e.printStackTrace();
 				}
 			}
-			
 		}).start();
-		
 	}
 }

@@ -1,9 +1,11 @@
 package fpt.shop;
 
+import java.net.MalformedURLException;
 import java.rmi.Naming;
+import java.rmi.NotBoundException;
+import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Optional;
-import java.util.regex.Pattern;
 
 import fpt.chat.ChatClient;
 import fpt.chat.ChatService;
@@ -237,9 +239,9 @@ public class ViewCustomer {
 	public void setBtnActionSendmsg() {
 		btnSendMsg.setOnAction((v) -> {
 			try {
-				chatServiceRemote.send(msgInput.getText());
-				chatArea.appendText(chatClient.getMsgFromServer() + "\n");
-				chatArea.setScrollTop(Double.MAX_VALUE);
+				chatServiceRemote.send(chatClient.getClientName() + ": " + msgInput.getText());
+//				chatArea.appendText(chatClient.getMsgFromServer() + "\n");
+//				chatArea.setScrollTop(Double.MAX_VALUE);
 			} catch (Exception e) {
 				e.printStackTrace();
 				System.out.println("Client send message to server failed.");
@@ -250,8 +252,20 @@ public class ViewCustomer {
 	public void setBtnActionChat() {
 		btnChat.setOnAction((v) -> {
 			try {
+				if (clientNameText.getText().trim().isEmpty()) {
+					System.out.println("Please input a valid username to login.");
+	        		return ;
+				}
 	        	String name = clientNameText.getText();
-	        	setChatServiceRemote((ChatService)Naming.lookup("//localhost:1099/ChatServer"));
+	        	System.out.println("name :" +name);
+
+	        	try {
+					setChatServiceRemote((ChatService)Naming.lookup("//localhost:1099/ChatServer"));
+				} catch (MalformedURLException e) {
+					System.out.println("To bind incorrect Service URL: //localhost:1099/ChatServer");
+				} catch (NotBoundException e) {
+					System.out.println("No registed service for //localhost:1099/ChatServer");
+				}
 	        	List<String> userList = chatServiceRemote.getUserList();
 	        	for(String s: userList) {
 	        		if (s.equals(name)) {
@@ -261,25 +275,34 @@ public class ViewCustomer {
 	        	}
 	        	
 	        	setChatClient(new ChatClient(name));
-	        	Naming.rebind("//localhost:1099/" + name, getChatClient());
+	        	chatClient.setChatArea(this.chatArea);
+	        	try {
+					Naming.rebind("//localhost:1099/" + name, getChatClient());
+				} catch (MalformedURLException e) {
+					System.out.println("To bind incorrect Service URL: " + "//localhost:1099/" + name);
+				}
 				chatServiceRemote.login(clientNameText.getText());
-			} catch (Exception e) {
-				System.out.println();
-				e.printStackTrace();
-			}
+			} catch (RemoteException e) {
+				System.out.println("fail to invoke a remote api.");
+			} 
 			chatDialog.showAndWait();
 		});
 	}
 	
 	public void setBtnActionBuy() {
 		btnBuy.setOnAction((v) -> {
-			Order order = new Order();
 			ObservableList<Product> ol = FXCollections.observableArrayList(productTableView.getItems());
-			for (Product p: ol) {
-				order.add(p);
-				modelShop.getOrderList().remove(p);
+			if (ol.isEmpty()) {
+				System.out.println("No products to buy.");
+				return ;
+			} else {
+				Order order = new Order();
+				for (Product p: ol) {
+					order.add(p);
+					modelShop.getOrderList().remove(p);
+				}
+				tcpClient.sendOrder(order);
 			}
-			tcpClient.sendOrder(order);
 		});
 	}
 	
@@ -325,11 +348,11 @@ public class ViewCustomer {
 				} else {
 					System.out.println("Stock is not enough.");
 				}
-				
-				username.clear();
-				password.clear();
-				loginDialog.setResult(null);
 			} 
+			
+			username.clear();
+			password.clear();
+			loginDialog.setResult(null);
 		});
 	}
 	

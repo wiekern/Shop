@@ -19,7 +19,7 @@ public class MainClass extends Application {
 		ControllerShop cShop = new ControllerShop();
 		cShop.link(modelShop, viewShop); 
 		Scene rootScene = new Scene(viewShop.getMainPane(), 400, 400);
-		
+
 		Stage customerStage = new Stage();
 		ViewCustomer viewCustomer = new ViewCustomer(modelShop);
 		ControllerCustomer cCustomer = new ControllerCustomer();
@@ -30,8 +30,6 @@ public class MainClass extends Application {
 		customerStage.show();	
 		primaryStage.setScene(rootScene);
 		primaryStage.show();
-		
-
 	}
 
 }

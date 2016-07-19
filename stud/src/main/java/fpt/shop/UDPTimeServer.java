@@ -2,6 +2,7 @@ package fpt.shop;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.BindException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -42,11 +43,14 @@ public class UDPTimeServer {
 							
 						} catch (IOException e) {
 							System.out.println("UDP Server: receive failed.");
-							e.printStackTrace();
 						}
 					}
+				} catch (BindException e) {
+					System.out.println("UDP Time Server bind failed, address already in use.Please close the running UDP running Server");
+					System.exit(0);
 				} catch (SocketException e) {
 					e.printStackTrace();
+					return ;
 				}
 			}
 		}).start();

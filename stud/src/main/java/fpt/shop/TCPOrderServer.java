@@ -1,10 +1,13 @@
 package fpt.shop;
 
 import java.io.IOException;
+import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
 import java.util.Set;
+
+import javafx.collections.ObservableList;
 
 public class TCPOrderServer {
 	private int portNumber = 6666;
@@ -28,8 +31,12 @@ public class TCPOrderServer {
 						Socket connectionSock = serverSock.accept();
 						getTCPOrderListener().updateWarehouse(connectionSock);
 					}
+				} catch (BindException e) {
+					System.out.println("TCP Order Server bind failed, address already in use. Please close the running TCP Order Server.");
+					System.exit(0);
 				} catch (IOException e) {
 					e.printStackTrace();
+					return ;
 				} 
 			}
 		}).start();
@@ -87,9 +94,12 @@ public class TCPOrderServer {
 
 	public void setLastOrder(Order lastOrder) {
 		this.lastOrder = new Order();
+		ObservableList<fpt.com.Product> ol = ModelShop.getInstance().getDelegate();
 		for (fpt.com.Product p: lastOrder) {	
 			Product productToLastorder = new Product(p.getName(), p.getId(), p.getPrice(), p.getQuantity());
 			this.lastOrder.add(productToLastorder);
+			System.out.println("@@@@@" + p.getId());
+			
 		}
 	}
 }

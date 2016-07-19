@@ -1,9 +1,9 @@
 package fpt.shop;
 
-import java.net.MalformedURLException;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.util.List;
 import java.util.Optional;
 
@@ -68,6 +68,7 @@ public class ViewCustomer {
 	
 	private ChatService chatServiceRemote;
 	private ChatClient chatClient;
+	private Registry chatClientRegistry;
 
 	public ViewCustomer() {
 		mainPane = new GridPane();
@@ -101,6 +102,14 @@ public class ViewCustomer {
 		GridPane.setHalignment(btnAddWare, HPos.LEFT);
 		
 		chatDialogInit();
+		try {
+			chatClientRegistry = LocateRegistry.getRegistry(1099);
+			chatClient = new ChatClient();
+		} catch (RemoteException e) {
+			System.out.println("Create LocateRegistry for client failed.");
+			chatClientRegistry = null;
+			e.printStackTrace();
+		}
 	}
 	
 	public ViewCustomer(ModelShop model) {
@@ -180,7 +189,6 @@ public class ViewCustomer {
 				if (param == btnLogin) {
 					User u = new User(username.getText(), password.getText());
 					if (u.getUsername().equals("admin") && u.getPasswrod().equals("admin")) {
-						System.out.println("name and password right.");
 						return u;
 					} else {
 						return null;
@@ -260,9 +268,7 @@ public class ViewCustomer {
 	        	System.out.println("name :" +name);
 
 	        	try {
-					setChatServiceRemote((ChatService)Naming.lookup("//localhost:1099/ChatServer"));
-				} catch (MalformedURLException e) {
-					System.out.println("To bind incorrect Service URL: //localhost:1099/ChatServer");
+					setChatServiceRemote((ChatService)LocateRegistry.getRegistry(1099).lookup("ChatServer"));
 				} catch (NotBoundException e) {
 					System.out.println("No registed service for //localhost:1099/ChatServer");
 				}
@@ -274,13 +280,10 @@ public class ViewCustomer {
 	        		}
 	        	}
 	        	
-	        	setChatClient(new ChatClient(name));
-	        	chatClient.setChatArea(this.chatArea);
-	        	try {
-					Naming.rebind("//localhost:1099/" + name, getChatClient());
-				} catch (MalformedURLException e) {
-					System.out.println("To bind incorrect Service URL: " + "//localhost:1099/" + name);
-				}
+	        	this.chatClient.setClientName(name);
+	        	this.chatClient.setChatArea(this.chatArea);
+        		this.chatClientRegistry.rebind(name, getChatClient());
+	        		
 				chatServiceRemote.login(clientNameText.getText());
 			} catch (RemoteException e) {
 				System.out.println("fail to invoke a remote api.");
@@ -300,7 +303,13 @@ public class ViewCustomer {
 				for (Product p: ol) {
 					order.add(p);
 					modelShop.getOrderList().remove(p);
+					for (Product p1: ModelShop.getInstance().getDelegate()) {
+						if (p.getId() == p1.getId()) {
+							p1.setQuantity(p1.getQuantity() - p.getQuantity());
+						}
+					}
 				}
+				this.productListView.refresh();
 				tcpClient.sendOrder(order);
 			}
 		});
@@ -400,6 +409,14 @@ public class ViewCustomer {
 
 	public void setChatClient(ChatClient chatClient) {
 		this.chatClient = chatClient;
+	}
+
+	public Registry getChatClientRegistry() {
+		return chatClientRegistry;
+	}
+
+	public void setChatClientRegistry(Registry chatClientRegistry) {
+		this.chatClientRegistry = chatClientRegistry;
 	}
 }
 

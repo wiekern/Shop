@@ -4,6 +4,8 @@ import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.LinkedList;
 import java.util.List;
@@ -37,16 +39,20 @@ public class ChatServer extends UnicastRemoteObject implements ChatService {
 	@Override
 	public void send(String s) {
 		// Clinet sends message to server
-		
+		Registry reg;
+		try {
+			reg = LocateRegistry.getRegistry(1099);
+		} catch (RemoteException e1) {
+			System.out.println("Get Registry of Client failed.");
+			return ;
+		}
 		// Suche angemeldte Clients, die dem ChatServer Dienst anbieten.
 		for (String username : userList) {
 			try {
 				// Server sendet die Nachricht an den Client zurueck.
 				System.out.println("User:" + username);
-				ClientService remote = (ClientService) Naming.lookup("//localhost:1099/" + username);
+				ClientService remote = (ClientService) reg.lookup(username);
 				remote.send(s);
-			} catch (MalformedURLException e) {
-				e.printStackTrace();
 			} catch (RemoteException e) {
 				e.printStackTrace();
 			} catch (NotBoundException e) {

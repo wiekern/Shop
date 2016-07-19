@@ -5,6 +5,7 @@ import java.net.BindException;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import javafx.collections.ObservableList;
@@ -13,7 +14,7 @@ public class TCPOrderServer {
 	private int portNumber = 6666;
 	private ServerSocket serverSock;
 	private Order sumOrder, lastOrder;
-	private HashMap<Long, fpt.com.Product> hashmapForSumOrder = new HashMap<>();
+	private Map<Long, fpt.shop.ProductList> hashmapForSumOrder = new HashMap<>();
 	private TCPOrderListener tcpOrderListener;
 	
 	public TCPOrderServer() {
@@ -59,25 +60,41 @@ public class TCPOrderServer {
 		Product oldProduct;
 		// speichere eingehende Bestellung in HashMap
 		for (fpt.com.Product p: order) {
+			ProductList tmpProductList;
 			Product tmpProduct = new Product(p.getName(), p.getId(), p.getPrice(), p.getQuantity());;
 			id = tmpProduct.getId();
 			quantityOfNew = tmpProduct.getQuantity();
-			if (hashmapForSumOrder.get(id) == null) {
-				hashmapForSumOrder.put(id, tmpProduct);
+			if ((tmpProductList = hashmapForSumOrder.get(id)) == null) {
+				tmpProductList = new ProductList();
+				tmpProductList.add(tmpProduct);
+				hashmapForSumOrder.put(id, tmpProductList);
 			} else {
-				oldProduct = (Product) hashmapForSumOrder.get(id);
-				quantityOfOld = oldProduct.getQuantity();
-				oldProduct.setQuantity(quantityOfNew + quantityOfOld);
-				
-				hashmapForSumOrder.put(id, oldProduct);
+				oldProduct = (Product) tmpProductList.get(0);
+				// id and name are same.
+				if (tmpProduct.getName().equals(oldProduct.getName())) {
+					quantityOfOld = oldProduct.getQuantity();
+					oldProduct.setQuantity(quantityOfNew + quantityOfOld);
+					hashmapForSumOrder.put(id, tmpProductList);
+				} else {
+					tmpProductList.add(tmpProduct);
+					hashmapForSumOrder.put(id, tmpProductList);
+				}
 			}
 		}
 		
-		Set<Long> keyset = hashmapForSumOrder.keySet();
 		this.sumOrder = new Order();
-		for (Long key: keyset) {
-			this.sumOrder.add(hashmapForSumOrder.get(key));
-		}
+		for(Map.Entry<Long, fpt.shop.ProductList> entry : hashmapForSumOrder.entrySet()) {
+			  //long key = entry.getKey();
+			  for (fpt.com.Product value : entry.getValue()) {
+				  this.sumOrder.add(value);
+			  }
+			}
+		// Don't think about same id and name.
+//		Set<Long> keyset = hashmapForSumOrder.keySet();
+//		this.sumOrder = new Order();
+//		for (Long key: keyset) {
+//			this.sumOrder.add(hashmapForSumOrder.get(key));
+//		}
 	}
 
 	public Order getSumOrder() {
@@ -94,12 +111,9 @@ public class TCPOrderServer {
 
 	public void setLastOrder(Order lastOrder) {
 		this.lastOrder = new Order();
-		ObservableList<fpt.com.Product> ol = ModelShop.getInstance().getDelegate();
 		for (fpt.com.Product p: lastOrder) {	
 			Product productToLastorder = new Product(p.getName(), p.getId(), p.getPrice(), p.getQuantity());
-			this.lastOrder.add(productToLastorder);
-			System.out.println("@@@@@" + p.getId());
-			
+			this.lastOrder.add(productToLastorder);	
 		}
 	}
 }

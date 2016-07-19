@@ -308,8 +308,7 @@ public class ViewShop {
 				
 				// Instead of IDGenerator we will generate ID by OpenJPA.
 				try{
-					IDGenerator generator = new IDGenerator();
-					long productId = generator.generateId();
+					long productId = IDGenerator.generateId();
 					Product product = new fpt.shop.Product(productName, productId, productPrice, productCount);
 					modelShop.add(product);
 				} catch (IDOverflowException idException){

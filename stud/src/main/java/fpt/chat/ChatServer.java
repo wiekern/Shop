@@ -1,7 +1,5 @@
 package fpt.chat;
 
-import java.net.MalformedURLException;
-import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
@@ -32,7 +30,7 @@ public class ChatServer extends UnicastRemoteObject implements ChatService {
 	@Override
 	public void logout(String s) {
 		// Client logout
-		System.out.println("User: " + s + "logout.");
+		System.out.println("User: " + s + " logout.");
 		userList.remove(s);	
 	}
 
@@ -50,7 +48,6 @@ public class ChatServer extends UnicastRemoteObject implements ChatService {
 		for (String username : userList) {
 			try {
 				// Server sendet die Nachricht an den Client zurueck.
-				System.out.println("User:" + username);
 				ClientService remote = (ClientService) reg.lookup(username);
 				remote.send(s);
 			} catch (RemoteException e) {

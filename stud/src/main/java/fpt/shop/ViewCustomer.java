@@ -265,7 +265,6 @@ public class ViewCustomer {
 	        		return ;
 				}
 	        	String name = clientNameText.getText();
-	        	System.out.println("name :" +name);
 
 	        	try {
 					setChatServiceRemote((ChatService)LocateRegistry.getRegistry(1099).lookup("ChatServer"));

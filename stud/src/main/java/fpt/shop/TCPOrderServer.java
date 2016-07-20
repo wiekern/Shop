@@ -16,8 +16,17 @@ public class TCPOrderServer {
 	private Order sumOrder, lastOrder;
 	private Map<Long, fpt.shop.ProductList> hashmapForSumOrder = new HashMap<>();
 	private TCPOrderListener tcpOrderListener;
+	private static TCPOrderServer instance = null;
 	
 	public TCPOrderServer() {
+		
+	}
+	
+	public static TCPOrderServer getInstance() {
+		if (instance == null) {
+			instance = new TCPOrderServer();
+		}
+		return instance;
 	}
 	
 	public void TCPServer() {
@@ -53,48 +62,62 @@ public class TCPOrderServer {
 	
 	public void acceptOrder(Order order) {
 		// speichere eingegangene Bestellung.
-		setLastOrder(order);
-		
-		long id;
-		int quantityOfNew, quantityOfOld;
-		Product oldProduct;
-		// speichere eingehende Bestellung in HashMap
-		for (fpt.com.Product p: order) {
-			ProductList tmpProductList;
-			Product tmpProduct = new Product(p.getName(), p.getId(), p.getPrice(), p.getQuantity());;
-			id = tmpProduct.getId();
-			quantityOfNew = tmpProduct.getQuantity();
-			if ((tmpProductList = hashmapForSumOrder.get(id)) == null) {
-				tmpProductList = new ProductList();
-				tmpProductList.add(tmpProduct);
-				hashmapForSumOrder.put(id, tmpProductList);
-			} else {
-				oldProduct = (Product) tmpProductList.get(0);
-				// id and name are same.
-				if (tmpProduct.getName().equals(oldProduct.getName())) {
-					quantityOfOld = oldProduct.getQuantity();
-					oldProduct.setQuantity(quantityOfNew + quantityOfOld);
-					hashmapForSumOrder.put(id, tmpProductList);
-				} else {
+		synchronized (this) {
+			setLastOrder(order);
+			
+			long id;
+			int quantityOfNew, quantityOfOld;
+			Product oldProduct;
+			// speichere eingehende Bestellung in HashMap
+			for (fpt.com.Product p: order) {
+				ProductList tmpProductList;
+				Product tmpProduct = new Product(p.getName(), p.getId(), p.getPrice(), p.getQuantity());;
+				id = tmpProduct.getId();
+				quantityOfNew = tmpProduct.getQuantity();
+				if ((tmpProductList = hashmapForSumOrder.get(id)) == null) {
+					tmpProductList = new ProductList();
 					tmpProductList.add(tmpProduct);
 					hashmapForSumOrder.put(id, tmpProductList);
+				} else {
+					oldProduct = (Product) tmpProductList.get(0);
+					// id and name are same.
+					if (tmpProduct.getName().equals(oldProduct.getName())) {
+						quantityOfOld = oldProduct.getQuantity();
+						oldProduct.setQuantity(quantityOfNew + quantityOfOld);
+						hashmapForSumOrder.put(id, tmpProductList);
+					} else {
+						tmpProductList.add(tmpProduct);
+						hashmapForSumOrder.put(id, tmpProductList);
+					}
 				}
 			}
+			
+			this.sumOrder = new Order();
+			for(Map.Entry<Long, fpt.shop.ProductList> entry : hashmapForSumOrder.entrySet()) {
+				//long key = entry.getKey();
+				for (fpt.com.Product value : entry.getValue()) {
+					this.sumOrder.add(value);
+				}
+			}
+			printWarehouseStatus(TCPOrderServer.getInstance());
+		}
+	}
+	
+	public void printWarehouseStatus(TCPOrderServer server) {
+		System.out.println("Order eingegangen:");
+		for (fpt.com.Product p: server.getLastOrder()) {
+			System.out.println(p.getName() + "\t" + p.getQuantity() + "\t" + p.getPrice() + " EUR");	
 		}
 		
-		this.sumOrder = new Order();
-		for(Map.Entry<Long, fpt.shop.ProductList> entry : hashmapForSumOrder.entrySet()) {
-			  //long key = entry.getKey();
-			  for (fpt.com.Product value : entry.getValue()) {
-				  this.sumOrder.add(value);
-			  }
-			}
-		// Don't think about same id and name.
-//		Set<Long> keyset = hashmapForSumOrder.keySet();
-//		this.sumOrder = new Order();
-//		for (Long key: keyset) {
-//			this.sumOrder.add(hashmapForSumOrder.get(key));
-//		}
+		System.out.println("\nOrders gesamt");
+		System.out.println("=================================");
+		for (fpt.com.Product p: server.getSumOrder()) {
+			System.out.println(p.getName() + "\t" + p.getQuantity() + "\t" + p.getPrice()*p.getQuantity() + " EUR");	
+		}
+		System.out.println("=================================");
+		System.out.println("Gesamtanzahl: " + server.getSumOrder().getQuantity());
+		System.out.println("Gesamtwert: " + server.getSumOrder().getSum() + " EUR\n");
+
 	}
 
 	public Order getSumOrder() {

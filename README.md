@@ -12,3 +12,4 @@ Die Struktur ist MVC (Model-View-Control), GUI mit JavaFx zu implementieren.
 3. XML mithilfe von XStream
 
 Standard wrid Binäre verwendet, wenn keine Strategie ausgewählt wird.
+

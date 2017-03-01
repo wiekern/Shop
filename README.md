@@ -1,7 +1,4 @@
-# FPT-Aufgaben Shop für Kunde and Händler
-
-Hausaufgaben im Modul "Fortgeschrittene Programmieretechniken". 
-
+# Shop für Kunde and Händler
 
 ## MVC Struktur
 Die Struktur ist MVC (Model-View-Control), GUI mit JavaFx zu implementieren.
